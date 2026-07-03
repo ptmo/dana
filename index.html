@@ -459,7 +459,7 @@
             <div id="tab-dashboard" class="tab-content active">
                 
                 <div style="margin-bottom: 20px; color: var(--text-main); padding: 0 4px;">
-                    <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 6px;">Halo, Nama Kamu 👋</h2>
+                    <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 6px;">Halo, Arie Novra Rosadi 👋</h2>
                     <p style="font-size: 13px; color: var(--text-muted);" id="greetingLimitText">Limit Anda <strong>Rp 8.000.000</strong>. Yuk ajukan pinjaman sekarang!</p>
                 </div><br>
 
@@ -559,8 +559,8 @@
                 <div class="card" style="display: flex; align-items: center; gap: 16px;">
                     <div style="width: 60px; height: 60px; background: var(--accent-color); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; color: var(--primary-color);">AR</div>
                     <div>
-                        <h3 style="margin-bottom: 4px;">Nama Kamu</h3>
-                        <p style="font-size: 13px; color: var(--text-muted);">+62 88888888888</p>
+                        <h3 style="margin-bottom: 4px;">Arie Novra Rosadi</h3>
+                        <p style="font-size: 13px; color: var(--text-muted);">+62 8896737408</p>
                         <span style="display: inline-block; background: rgba(16, 185, 129, 0.1); color: var(--success-color); font-size: 10px; padding: 4px 8px; border-radius: 4px; margin-top: 8px; font-weight: 600;"><i class="fas fa-check-circle"></i> Akun Terverifikasi</span>
                     </div>
                 </div>
@@ -580,6 +580,11 @@
                         <span>Bahasa</span>
                         <span style="color: var(--text-muted); font-size: 13px;">Indonesia <i class="fas fa-chevron-right" style="margin-left:8px;"></i></span>
                     </div>
+                    
+                    <div style="padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; color: var(--danger-color); font-weight: 600; cursor: pointer;" onclick="clearAppData()">
+                        <span>Hapus Data</span><i class="fas fa-trash-alt"></i>
+                    </div>
+
                     <div style="padding: 16px; display: flex; justify-content: space-between; color: var(--danger-color); font-weight: 600; cursor: pointer;">
                         <span>Keluar Akun</span><i class="fas fa-sign-out-alt"></i>
                     </div>
@@ -778,7 +783,7 @@
         
         // Auto-update bank utama dari John Doe menjadi data asli Anda
         if (savedBanks.length === 0 || savedBanks[0].name === 'John Doe') {
-            savedBanks[0] = { id: 1, bank: 'BRI', name: 'NAMA KAMU', number: '1234567890' };
+            savedBanks[0] = { id: 1, bank: 'BRI', name: 'ARIE NOVRA ROSADI', number: '413401009268507' };
             localStorage.setItem('dana_pinjam_banks', JSON.stringify(savedBanks));
         }
         // Tambahan penyimpanan Pinjaman Aktif
@@ -1458,6 +1463,24 @@
                     console.error('PWA Service Worker gagal:', error);
                 });
             });
+        }
+
+        /* --- FITUR HAPUS DATA (RESET APP) --- */
+        function clearAppData() {
+            // Memunculkan konfirmasi bawaan browser untuk keamanan
+            const confirmDelete = window.confirm("PERINGATAN: Seluruh riwayat pinjaman, notifikasi, dan data rekening Anda akan dihapus permanen. Apakah Anda yakin ingin mereset aplikasi?");
+            
+            if (confirmDelete) {
+                // Menghapus kunci penyimpanan khusus aplikasi ini saja (aman)
+                localStorage.removeItem('dana_pinjam_notif');
+                localStorage.removeItem('dana_pinjam_banks');
+                localStorage.removeItem('dana_pinjam_active_loan');
+                localStorage.removeItem('dana_pinjam_theme');
+                localStorage.removeItem('dana_pinjam_kyc');
+                
+                // Memuat ulang halaman untuk menerapkan reset
+                window.location.reload();
+            }
         }
 
         // 7. Deteksi Jaringan (Offline Mode)
