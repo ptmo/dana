@@ -319,19 +319,28 @@
         .bank-icon {
             width: 40px; 
             height: 40px; 
-            background: #005E9D; 
-            color: white; 
+            background: #ffffff; /* Ubah ke putih agar logo PNG terlihat jelas */
+            border: 1px solid var(--border-color); /* Tambahan border tipis */
+            color: var(--primary-color); 
             border-radius: 50%;
             display: flex; 
             justify-content: center; 
             align-items: center; 
             font-weight: 700; 
             margin-right: 16px;
-            flex-shrink: 0; /* Kunci penolakan kompresi agar tidak gepeng */
+            flex-shrink: 0; 
+            overflow: hidden; /* Mengunci agar gambar tidak keluar batas */
+            padding: 4px; /* Memberi ruang napas untuk logo */
+        }
+        /* Tambahan aturan khusus untuk gambar di dalam bank-icon */
+        .bank-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         .bank-details h4 { font-size: 14px; margin-bottom: 4px; color: var(--text-main); }
         .bank-details p { font-size: 12px; color: var(--text-muted); }
-
+        
         /* Installment (Cicilan) List */
         .installment-item {
             background: var(--card-bg); padding: 16px; border-radius: var(--radius-md);
@@ -575,7 +584,7 @@
                         <div class="receipt-row" style="margin-bottom: 10px;"><span style="color:var(--text-muted)">Durasi Pinjaman</span><span id="detTenor" style="font-weight:600">-</span></div>
                         <div class="receipt-row" style="margin-bottom: 10px;"><span style="color:var(--text-muted)">Jumlah Pembayaran</span><span id="detTotal" style="font-weight:600">-</span></div>
                         <div class="receipt-row" style="margin-bottom: 10px;"><span style="color:var(--text-muted)">Biaya Pencairan</span><span id="detAdmin" style="font-weight:600">-</span></div>
-                        <div class="receipt-row" style="margin-bottom: 10px;"><span style="color:var(--text-muted)">Biaya Proteksi Pinjaman</span><span id="detProteksi" style="font-weight:600">Rp 90.000</span></div>
+                        
                         <div class="receipt-row" style="margin-bottom: 0; padding-top: 10px; border-top: 1px dashed var(--border-color);">
                             <span style="color:var(--text-muted)">No. Pinjaman</span><span id="detLoanId" style="font-weight:700; color: var(--text-main); font-size: 11px;">-</span>
                         </div>
@@ -991,6 +1000,18 @@
             });
         });
 
+        /* --- HELPER LOGO BANK --- */
+        function getBankLogo(bankName) {
+            const logos = {
+                'BCA': 'https://www.bca.co.id/-/media/Feature/Card/List-Card/Tentang-BCA/Brand-Assets/Logo-BCA/Logo-BCA_Biru.png',
+                'Mandiri': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Bank_Mandiri_logo_2016.svg/960px-Bank_Mandiri_logo_2016.svg.png',
+                'BRI': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Logo_Bank_Rakyat_Indonesia.svg/500px-Logo_Bank_Rakyat_Indonesia.svg.png',
+                'BNI': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Bank_Negara_Indonesia_logo_%282004%29.svg/330px-Bank_Negara_Indonesia_logo_%282004%29.svg.png'
+            };
+            // Jika ada logonya, cetak tag <img>, jika tidak, kembali ke teks default 3 huruf
+            return logos[bankName] ? `<img src="${logos[bankName]}" alt="${bankName}">` : bankName.substring(0,3);
+        }
+
         /* --- LOGIKA BANK --- */
         function renderBanks() {
             const container = document.getElementById('bankListContainer');
@@ -1000,7 +1021,7 @@
                 item.className = 'bank-item';
                 item.onclick = () => selectBank(b); // Pilih bank ini
                 item.innerHTML = `
-                    <div class="bank-icon">${b.bank.substring(0,3)}</div>
+                    <div class="bank-icon">${getBankLogo(b.bank)}</div>
                     <div class="bank-details">
                         <h4>Bank ${b.bank}</h4>
                         <p>a.n ${b.name} • ${b.number}</p>
@@ -1245,7 +1266,7 @@
             document.getElementById('loanTotalLeft').textContent = 'Rp ' + formatRupiah(unpaidTotal);
             document.getElementById('loanMonthly').textContent = 'Rp ' + formatRupiah(activeLoan.monthly);
 
-            // --- INJEKSI DATA RINCIAN KONTRAK BARU ---
+            // --- INJEKSI DATA RINCIAN KONTRAK BARU (TANPA PROTEKSI) ---
             const totalPayment = activeLoan.monthly * activeLoan.tenor;
             const adminFee = activeLoan.adminFee || (activeLoan.amount * 0.005);
             
@@ -1253,8 +1274,6 @@
             document.getElementById('detTenor').textContent = activeLoan.tenor + " Bulan";
             document.getElementById('detTotal').textContent = 'Rp ' + formatRupiah(totalPayment);
             document.getElementById('detAdmin').textContent = 'Rp ' + formatRupiah(adminFee);
-            // Biaya Proteksi statis Rp90rb untuk estetika
-            document.getElementById('detProteksi').textContent = 'Rp 90.000';
             document.getElementById('detLoanId').textContent = activeLoan.id || ('TRX' + Date.now());
             // -----------------------------------------
 
@@ -1929,7 +1948,7 @@
                 item.style.cursor = 'default'; // Kursor diubah jadi panah biasa (bukan pointer)
                 
                 item.innerHTML = `
-                    <div class="bank-icon">${b.bank.substring(0,3)}</div>
+                    <div class="bank-icon">${getBankLogo(b.bank)}</div>
                     <div class="bank-details">
                         <h4>Bank ${b.bank}</h4>
                         <p>a.n ${b.name} • ${b.number}</p>
