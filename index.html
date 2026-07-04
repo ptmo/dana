@@ -1222,9 +1222,13 @@
             isLoanPending = true;
             renderPinjamanTab();
 
-            // 3. Mulai timer 10 detik sebelum verifikasi berhasil
-            setTimeout(generateVerificationNotification, 10000);
-        }
+            // 3. Mulai timer 10 detik dan paksa UI refresh secara Real-Time
+            setTimeout(() => {
+                isLoanPending = false; // 1. Matikan status pending/loading
+                generateVerificationNotification(); // 2. Jalankan pembuatan kontrak & notifikasi
+                renderPinjamanTab(); // 3. PAKSA GAMBAR ULANG HALAMAN SAAT ITU JUGA
+            }, 10000); 
+         }
 
         // Matikan status pending saat notifikasi berhasil muncul
         const oldGenerateVerificationNotificationForPending = generateVerificationNotification;
