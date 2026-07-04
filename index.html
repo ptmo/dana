@@ -566,9 +566,23 @@
                             <span class="result-value" id="loanMonthly">Rp 0</span>
                         </div>
                     </div>
-                    <h3 style="font-size: 15px; margin-bottom: 12px; color: var(--text-main);">Jadwal Pembayaran</h3>
-                    <div id="installmentList">
+
+                    <div class="card" style="padding: 16px; margin-bottom: 24px; margin-top: 0;">
+                        <h3 style="font-size: 14px; margin-bottom: 16px; color: var(--text-main); border-bottom: 1px dashed var(--border-color); padding-bottom: 12px;">
+                            <i class="fas fa-file-invoice-dollar" style="margin-right: 6px; color: var(--accent-color);"></i> Rincian Kontrak
+                        </h3>
+                        <div class="receipt-row" style="margin-bottom: 10px;"><span style="color:var(--text-muted)">Waktu Pengajuan</span><span id="detTime" style="font-weight:600; font-size:12px;">-</span></div>
+                        <div class="receipt-row" style="margin-bottom: 10px;"><span style="color:var(--text-muted)">Durasi Pinjaman</span><span id="detTenor" style="font-weight:600">-</span></div>
+                        <div class="receipt-row" style="margin-bottom: 10px;"><span style="color:var(--text-muted)">Jumlah Pembayaran</span><span id="detTotal" style="font-weight:600">-</span></div>
+                        <div class="receipt-row" style="margin-bottom: 10px;"><span style="color:var(--text-muted)">Biaya Pencairan</span><span id="detAdmin" style="font-weight:600">-</span></div>
+                        <div class="receipt-row" style="margin-bottom: 10px;"><span style="color:var(--text-muted)">Biaya Proteksi Pinjaman</span><span id="detProteksi" style="font-weight:600">Rp 90.000</span></div>
+                        <div class="receipt-row" style="margin-bottom: 0; padding-top: 10px; border-top: 1px dashed var(--border-color);">
+                            <span style="color:var(--text-muted)">No. Pinjaman</span><span id="detLoanId" style="font-weight:700; color: var(--text-main); font-size: 11px;">-</span>
                         </div>
+                    </div>
+
+                    <h3 style="font-size: 15px; margin-bottom: 12px; color: var(--text-main);">Jadwal Pembayaran</h3>
+                    <div id="installmentList"></div>
                 </div>
             </div>
 
@@ -1230,6 +1244,19 @@
             let unpaidTotal = activeLoan.installments.filter(i => !i.isPaid).reduce((sum, i) => sum + i.amount, 0);
             document.getElementById('loanTotalLeft').textContent = 'Rp ' + formatRupiah(unpaidTotal);
             document.getElementById('loanMonthly').textContent = 'Rp ' + formatRupiah(activeLoan.monthly);
+
+            // --- INJEKSI DATA RINCIAN KONTRAK BARU ---
+            const totalPayment = activeLoan.monthly * activeLoan.tenor;
+            const adminFee = activeLoan.adminFee || (activeLoan.amount * 0.005);
+            
+            document.getElementById('detTime').textContent = activeLoan.time || "Baru saja";
+            document.getElementById('detTenor').textContent = activeLoan.tenor + " Bulan";
+            document.getElementById('detTotal').textContent = 'Rp ' + formatRupiah(totalPayment);
+            document.getElementById('detAdmin').textContent = 'Rp ' + formatRupiah(adminFee);
+            // Biaya Proteksi statis Rp90rb untuk estetika
+            document.getElementById('detProteksi').textContent = 'Rp 90.000';
+            document.getElementById('detLoanId').textContent = activeLoan.id || ('TRX' + Date.now());
+            // -----------------------------------------
 
             // Render List Cicilan
             listContainer.innerHTML = '';
