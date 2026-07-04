@@ -563,6 +563,22 @@
                     <h3 style="margin-bottom: 8px;">Belum Ada Pinjaman Aktif</h3>
                     <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">Riwayat tagihan dan kontrak pinjaman Anda akan otomatis muncul di sini setelah pengajuan disetujui.</p>
                 </div>
+
+                <!-- STATUS PENGAJUAN PENDING (DIVERIFIKASI) -->
+                <div id="pendingLoanState" class="card" style="display:none; text-align: center; padding: 40px 24px;">
+                    <div style="position: relative; display: inline-block; margin-bottom: 20px;">
+                        <i class="fas fa-file-invoice-dollar" style="font-size: 56px; color: var(--border-color);"></i>
+                        <i class="fas fa-sync fa-spin" style="position: absolute; bottom: -5px; right: -5px; font-size: 24px; color: var(--accent-color); background: var(--card-bg); border-radius: 50%; padding: 2px;"></i>
+                    </div>
+                    <h3 style="margin-bottom: 12px; color: var(--text-main);">Pengajuan Sedang Diverifikasi</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px;">
+                        Mohon tunggu beberapa saat. Sistem otomatis kami sedang melakukan <i>credit scoring</i> dan mengevaluasi data pengajuan Anda.
+                    </p>
+                    <div style="background: var(--bg-color); border: 1px dashed var(--border-color); border-radius: var(--radius-md); padding: 12px; display: inline-block; text-align: left;">
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;"><i class="fas fa-shield-alt" style="color: var(--success-color); margin-right: 6px;"></i> Terenkripsi 256-bit (Aman)</div>
+                        <div style="font-size: 11px; color: var(--text-muted);"><i class="fas fa-stopwatch" style="color: var(--accent-color); margin-right: 6px;"></i> Estimasi: Kurang dari 1 Menit</div>
+                    </div>
+                </div>
                 
                 <div id="activeLoanState" style="display:none;">
                     <div class="result-section" style="margin-bottom: 20px;">
@@ -1192,11 +1208,30 @@
             setTimeout(() => openModal('modalSuccess'), 300);
         }
 
+        /* --- LOGIKA OTOMATIS PINDAH TAB & LOADING VERIFIKASI --- */
         function closeSuccess() {
             closeModal('modalSuccess');
-            // Trigger 10-second automation script
+            
+            // 1. Pindahkan pengguna ke Tab Pinjaman secara otomatis
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelector('.nav-item[data-target="tab-pinjaman"]').classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('tab-pinjaman').classList.add('active');
+
+            // 2. Tampilkan UI "Sedang Diverifikasi"
+            isLoanPending = true;
+            renderPinjamanTab();
+
+            // 3. Mulai timer 10 detik sebelum verifikasi berhasil
             setTimeout(generateVerificationNotification, 10000);
         }
+
+        // Matikan status pending saat notifikasi berhasil muncul
+        const oldGenerateVerificationNotificationForPending = generateVerificationNotification;
+        generateVerificationNotification = function() {
+            isLoanPending = false; // Matikan status loading
+            oldGenerateVerificationNotificationForPending(); // Lanjutkan render data aslinya
+        };
 
         /* --- NOTIFICATION & TOAST LOGIC --- */
         function showToast(msg) {
@@ -1247,26 +1282,43 @@
             updateDashboardState();
         }
 
+        /* --- RENDER TAB PINJAMAN (DENGAN STATUS PENDING) --- */
+        let isLoanPending = false; // Penanda status sedang diverifikasi
+
         function renderPinjamanTab() {
             const emptyState = document.getElementById('emptyLoanState');
             const activeState = document.getElementById('activeLoanState');
+            const pendingState = document.getElementById('pendingLoanState');
             const listContainer = document.getElementById('installmentList');
 
+            // 1. Jika sedang diverifikasi, tampilkan animasi loading saja
+            if (isLoanPending) {
+                emptyState.style.display = 'none';
+                activeState.style.display = 'none';
+                if(pendingState) pendingState.style.display = 'block';
+                return;
+            }
+
+            // Sembunyikan pending state jika sudah lewat
+            if(pendingState) pendingState.style.display = 'none';
+
+            // 2. Jika tidak ada pinjaman aktif
             if(!activeLoan) {
                 emptyState.style.display = 'block';
                 activeState.style.display = 'none';
                 return;
             }
 
+            // 3. Tampilkan Data Pinjaman Aktif
             emptyState.style.display = 'none';
             activeState.style.display = 'block';
 
-            // Hitung sisa tagihan yang belum dibayar
+            // Hitung sisa tagihan
             let unpaidTotal = activeLoan.installments.filter(i => !i.isPaid).reduce((sum, i) => sum + i.amount, 0);
             document.getElementById('loanTotalLeft').textContent = 'Rp ' + formatRupiah(unpaidTotal);
             document.getElementById('loanMonthly').textContent = 'Rp ' + formatRupiah(activeLoan.monthly);
 
-            // --- INJEKSI DATA RINCIAN KONTRAK BARU (TANPA PROTEKSI) ---
+            // Injeksi Data Rincian Kontrak
             const totalPayment = activeLoan.monthly * activeLoan.tenor;
             const adminFee = activeLoan.adminFee || (activeLoan.amount * 0.005);
             
@@ -1275,7 +1327,6 @@
             document.getElementById('detTotal').textContent = 'Rp ' + formatRupiah(totalPayment);
             document.getElementById('detAdmin').textContent = 'Rp ' + formatRupiah(adminFee);
             document.getElementById('detLoanId').textContent = activeLoan.id || ('TRX' + Date.now());
-            // -----------------------------------------
 
             // Render List Cicilan
             listContainer.innerHTML = '';
