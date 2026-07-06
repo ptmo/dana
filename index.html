@@ -2066,6 +2066,87 @@
             showToast('Rekening berhasil disimpan');
         };
 
+        /* --- LOGIKA PELUNASAN OTOMATIS (TANPA TOMBOL) --- */
+        function triggerLunasSequence() {
+            // 1. Tampilkan Popup Medali Lunas
+            openModal('modalLunas');
+
+            // 2. Tunggu 3.5 Detik, lalu bersihkan layar otomatis
+            setTimeout(() => {
+                closeModal('modalLunas');
+
+                // Bersihkan data pinjaman aktif dari memori
+                activeLoan = null;
+                saveAppMemories();
+
+                // Segarkan UI (Akan memunculkan kotak "Belum Ada Pinjaman")
+                renderPinjamanTab();
+                updateDashboardState(); // Kembalikan limit 8 juta di beranda
+                if(typeof renderHistoryTab === 'function') renderHistoryTab();
+                
+                // Pastikan pengguna tetap berada di Tab Pinjaman
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                document.querySelector('.nav-item[data-target="tab-pinjaman"]').classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.getElementById('tab-pinjaman').classList.add('active');
+                
+            }, 3500);
+        }
+
+        // Timpa ulang fungsi confirmPayment untuk mencegat cicilan terakhir
+        confirmPayment = function() {
+            if(selectedInstallmentIndex !== null) {
+                const inst = activeLoan.installments[selectedInstallmentIndex];
+                const method = document.getElementById('paymentMethod').value;
+                const now = new Date();
+                const timeString = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ', ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+                activeLoan.installments[selectedInstallmentIndex].isPaid = true;
+                activeLoan.installments[selectedInstallmentIndex].paymentTime = timeString;
+                activeLoan.installments[selectedInstallmentIndex].paymentMethod = method;
+                
+                const newNotif = {
+                    id: Date.now(),
+                    title: `Pembayaran Cicilan Ke-${inst.month} Berhasil`,
+                    message: `Terima kasih! Pembayaran tagihan Anda sebesar Rp ${formatRupiah(inst.amount)} menggunakan metode ${method} telah berhasil dikonfirmasi pada ${timeString}.`,
+                    time: timeString,
+                    isRead: false
+                };
+                notifications.unshift(newNotif);
+                
+                saveAppMemories();
+                renderNotifications();
+                closeModal('modalPayment');
+
+                // Cek apakah semua cicilan sudah lunas?
+                const isAllPaid = activeLoan.installments.every(i => i.isPaid);
+
+                if (isAllPaid) {
+                    // JIKA LUNAS TOTAL: Masuk ke animasi medali tanpa tombol
+                    if(typeof renderHistoryTab === 'function') renderHistoryTab(); 
+                    triggerLunasSequence();
+                } else {
+                    // JIKA BELUM LUNAS: Tampilkan struk putih biasa seperti biasa
+                    renderPinjamanTab(); 
+                    updateDashboardState();
+                    if(typeof renderHistoryTab === 'function') renderHistoryTab(); 
+                    setTimeout(() => viewReceipt(selectedInstallmentIndex), 300);
+                }
+            }
+        };
+
+        // Timpa ulang fitur "Lunasi Semua Sisa Tagihan" agar ikut animasi medali
+        earlyRepayment = function() {
+            activeLoan.installments.forEach(inst => inst.isPaid = true);
+            saveAppMemories();
+            
+            notifications.unshift({ id: Date.now(), title: 'Pelunasan Dipercepat Berhasil', message: `Anda telah melunasi seluruh sisa tagihan. Limit Anda kini telah pulih.`, time: 'Baru Saja', isRead: false });
+            renderNotifications();
+            
+            if(typeof renderHistoryTab === 'function') renderHistoryTab(); 
+            triggerLunasSequence(); // Panggil animasi lunas
+        };
+
         // 7. Deteksi Jaringan (Offline Mode)
         window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
         window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));      
