@@ -1365,23 +1365,6 @@
             });
         }
 
-        function viewReceipt(index) {
-            const inst = activeLoan.installments[index];
-            
-            // Ambil data historis dari memori. (Atau tampilkan teks default jika transaksi dilakukan sebelum fitur ini ada)
-            const timeStr = inst.paymentTime || "Waktu tidak tercatat";
-            const methodStr = inst.paymentMethod || "Transfer Sistem";
-
-            // Isi rincian data ke dalam modal struk
-            document.getElementById('receiptTime').textContent = timeStr;
-            document.getElementById('receiptMethod').textContent = methodStr;
-            document.getElementById('receiptMonth').textContent = inst.month;
-            document.getElementById('receiptAmount').textContent = 'Rp ' + formatRupiah(inst.amount);
-            
-            // Tampilkan Struk
-            openModal('modalReceipt');
-        }
-
         function openPaymentModal(index) {
             selectedInstallmentIndex = index;
             const inst = activeLoan.installments[index];
@@ -1389,46 +1372,6 @@
             document.getElementById('payDate').textContent = inst.dueDate;
             document.getElementById('payAmount').textContent = 'Rp ' + formatRupiah(inst.amount);
             openModal('modalPayment');
-        }
-
-        function confirmPayment() {
-            if(selectedInstallmentIndex !== null) {
-                // Ambil data cicilan yang sedang dibayar dan metode pembayarannya
-                const inst = activeLoan.installments[selectedInstallmentIndex];
-                const method = document.getElementById('paymentMethod').value;
-                const amountFormatted = formatRupiah(inst.amount);
-                
-                // Dapatkan waktu saat ini secara real-time
-                const now = new Date();
-                const timeString = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ', ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
-
-                // 1. Ubah status menjadi lunas DAN simpan data historis ke struk
-                activeLoan.installments[selectedInstallmentIndex].isPaid = true;
-                activeLoan.installments[selectedInstallmentIndex].paymentTime = timeString; // Menyimpan waktu permanen
-                activeLoan.installments[selectedInstallmentIndex].paymentMethod = method; // Menyimpan metode permanen
-                
-                // 2. Buat Notifikasi Baru (Struk Digital)
-                const newNotif = {
-                    id: Date.now(),
-                    title: `Pembayaran Cicilan Ke-${inst.month} Berhasil`,
-                    message: `Terima kasih! Pembayaran tagihan Anda sebesar Rp ${amountFormatted} menggunakan metode ${method} telah berhasil dikonfirmasi pada ${timeString}.`,
-                    time: timeString,
-                    isRead: false
-                };
-                notifications.unshift(newNotif); // Masukkan ke urutan paling atas
-                
-                // 3. Simpan memori dan render ulang tampilan UI
-                saveAppMemories();
-                renderPinjamanTab(); 
-                updateDashboardState();
-                renderNotifications(); // Update lencana lonceng merah otomatis
-                
-                // 4. Tutup modal bayar lama
-                closeModal('modalPayment');
-                
-                // 5. Buka popup rincian struk setelah jeda sedikit menggunakan fungsi viewReceipt
-                setTimeout(() => viewReceipt(selectedInstallmentIndex), 300);
-            }
         }
 
         function renderNotifications() {
@@ -1668,18 +1611,6 @@
                 listContainer.insertAdjacentHTML('beforebegin', progHtml);
             }
         };
-
-        function earlyRepayment() {
-            activeLoan.installments.forEach(inst => inst.isPaid = true);
-            saveAppMemories();
-            renderPinjamanTab();
-            updateDashboardState();
-            showToast('Pelunasan Dipercepat Berhasil!');
-            
-            // Tambah nota khusus ke notifikasi
-            notifications.unshift({ id: Date.now(), title: 'Pelunasan Dipercepat Berhasil', message: `Anda telah melunasi seluruh sisa tagihan kontrak pinjaman Rp ${formatRupiah(activeLoan.amount)}. Limit Anda kini telah pulih.`, time: 'Baru Saja', isRead: false });
-            renderNotifications();
-        }
 
         // 5. Logika PIN Keamanan
         let pinCallback = null;
@@ -2065,49 +1996,79 @@
             showToast('Rekening berhasil disimpan');
         };
 
-        /* --- LOGIKA PELUNASAN OTOMATIS (TANPA TOMBOL) --- */
-        function triggerLunasSequence() {
-            // 1. Tampilkan Popup Medali Lunas
-            openModal('modalLunas');
-
-            // 2. Tunggu 3.5 Detik, lalu bersihkan layar otomatis
-            setTimeout(() => {
-                closeModal('modalLunas');
-
-                // Bersihkan data pinjaman aktif dari memori
-                activeLoan = null;
-                saveAppMemories();
-
-                // Segarkan UI (Akan memunculkan kotak "Belum Ada Pinjaman")
-                renderPinjamanTab();
-                updateDashboardState(); // Kembalikan limit 8 juta di beranda
-                if(typeof renderHistoryTab === 'function') renderHistoryTab();
-                
-                // Pastikan pengguna tetap berada di Tab Pinjaman
-                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-                document.querySelector('.nav-item[data-target="tab-pinjaman"]').classList.add('active');
-                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-                document.getElementById('tab-pinjaman').classList.add('active');
-                
-            }, 3500);
+        /* --- FUNGSI RESET SETELAH STRUK LUNAS DITUTUP --- */
+        function executeResetAfterPelunasan() {
+            closeModal('modalReceipt');
+            activeLoan = null; // Hapus data pinjaman
+            saveAppMemories();
+            renderPinjamanTab();
+            updateDashboardState(); 
+            if(typeof renderHistoryTab === 'function') renderHistoryTab();
+            
+            // Pindahkan tampilan ke Tab Pinjaman yang sudah kosong
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelector('.nav-item[data-target="tab-pinjaman"]').classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('tab-pinjaman').classList.add('active');
         }
 
-        // Timpa ulang fungsi confirmPayment untuk mencegat cicilan terakhir
+        /* --- FUNGSI RENDER STRUK (BISA BERUBAH WUJUD) --- */
+        function viewReceipt(index, isPelunasanMoment = false) {
+            const inst = activeLoan.installments[index];
+            
+            const timeStr = inst.paymentTime || "Waktu tidak tercatat";
+            const methodStr = inst.paymentMethod || "Transfer Sistem";
+            const payIdStr = inst.paymentId || "PAY" + Date.now();
+
+            document.getElementById('receiptPaymentId').textContent = payIdStr;
+            document.getElementById('receiptTime').textContent = timeStr;
+            document.getElementById('receiptMethod').textContent = methodStr;
+            document.getElementById('receiptMonth').textContent = inst.month;
+            document.getElementById('receiptAmount').textContent = 'Rp ' + formatRupiah(inst.amount);
+            
+            // Ambil elemen HTML yang akan diubah wujudnya
+            const icon = document.getElementById('receiptIcon');
+            const title = document.getElementById('receiptTitle');
+            const text = document.getElementById('receiptPelunasanText');
+            const btn = document.getElementById('receiptBtn');
+
+            if (isPelunasanMoment) {
+                // Wujud Struk: Pelunasan Terakhir
+                icon.className = 'fas fa-medal';
+                icon.style.color = 'var(--accent-color)';
+                title.textContent = 'Pelunasan Berhasil!';
+                text.style.display = 'block';
+                btn.onclick = function() { executeResetAfterPelunasan(); };
+            } else {
+                // Wujud Struk: Cicilan Biasa
+                icon.className = 'fas fa-check-circle icon-success';
+                icon.style.color = 'var(--success-color)';
+                title.textContent = 'Pembayaran Berhasil!';
+                text.style.display = 'none';
+                btn.onclick = function() { closeModal('modalReceipt'); };
+            }
+
+            openModal('modalReceipt');
+        }
+        
+        /* --- FUNGSI KONFIRMASI BAYAR (PEMBUAT ID PEMBAYARAN) --- */
         confirmPayment = function() {
             if(selectedInstallmentIndex !== null) {
                 const inst = activeLoan.installments[selectedInstallmentIndex];
                 const method = document.getElementById('paymentMethod').value;
                 const now = new Date();
                 const timeString = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ', ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+                const paymentId = 'PAY' + Date.now() + Math.floor(Math.random() * 1000); // Generate ID Pembayaran unik
 
                 activeLoan.installments[selectedInstallmentIndex].isPaid = true;
                 activeLoan.installments[selectedInstallmentIndex].paymentTime = timeString;
                 activeLoan.installments[selectedInstallmentIndex].paymentMethod = method;
+                activeLoan.installments[selectedInstallmentIndex].paymentId = paymentId; 
                 
                 const newNotif = {
                     id: Date.now(),
                     title: `Pembayaran Cicilan Ke-${inst.month} Berhasil`,
-                    message: `Terima kasih! Pembayaran tagihan Anda sebesar Rp ${formatRupiah(inst.amount)} menggunakan metode ${method} telah berhasil dikonfirmasi pada ${timeString}.`,
+                    message: `Terima kasih! Pembayaran tagihan Anda sebesar Rp ${formatRupiah(inst.amount)} menggunakan metode ${method} telah berhasil dikonfirmasi. ID: ${paymentId}`,
                     time: timeString,
                     isRead: false
                 };
@@ -2117,33 +2078,64 @@
                 renderNotifications();
                 closeModal('modalPayment');
 
-                // Cek apakah semua cicilan sudah lunas?
                 const isAllPaid = activeLoan.installments.every(i => i.isPaid);
 
                 if (isAllPaid) {
-                    // JIKA LUNAS TOTAL: Masuk ke animasi medali tanpa tombol
                     if(typeof renderHistoryTab === 'function') renderHistoryTab(); 
-                    triggerLunasSequence();
+                    // Buka struk mode pelunasan (Wujud Medali)
+                    setTimeout(() => viewReceipt(selectedInstallmentIndex, true), 300);
                 } else {
-                    // JIKA BELUM LUNAS: Tampilkan struk putih biasa seperti biasa
                     renderPinjamanTab(); 
                     updateDashboardState();
                     if(typeof renderHistoryTab === 'function') renderHistoryTab(); 
-                    setTimeout(() => viewReceipt(selectedInstallmentIndex), 300);
+                    // Buka struk mode biasa (Wujud Centang Hijau)
+                    setTimeout(() => viewReceipt(selectedInstallmentIndex, false), 300);
                 }
             }
         };
 
-        // Timpa ulang fitur "Lunasi Semua Sisa Tagihan" agar ikut animasi medali
+        /* --- FUNGSI PELUNASAN DIPERCEPAT (LUNASI SEMUA) --- */
         earlyRepayment = function() {
-            activeLoan.installments.forEach(inst => inst.isPaid = true);
+            let totalPaidNow = 0;
+            let lastIndex = 0;
+            
+            // Loop semua tagihan yang belum dibayar
+            activeLoan.installments.forEach((inst, index) => {
+                if(!inst.isPaid) {
+                    inst.isPaid = true;
+                    inst.paymentTime = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ', ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+                    inst.paymentMethod = "Pelunasan Cepat";
+                    inst.paymentId = 'PAY' + Date.now() + index;
+                    totalPaidNow += inst.amount;
+                    lastIndex = index;
+                }
+            });
             saveAppMemories();
             
             notifications.unshift({ id: Date.now(), title: 'Pelunasan Dipercepat Berhasil', message: `Anda telah melunasi seluruh sisa tagihan. Limit Anda kini telah pulih.`, time: 'Baru Saja', isRead: false });
             renderNotifications();
-            
             if(typeof renderHistoryTab === 'function') renderHistoryTab(); 
-            triggerLunasSequence(); // Panggil animasi lunas
+            
+            // Modifikasi paksa nilai Struk untuk mode Pelunasan Dipercepat
+            document.getElementById('receiptPaymentId').textContent = 'PAY' + Date.now();
+            document.getElementById('receiptTime').textContent = activeLoan.installments[lastIndex].paymentTime;
+            document.getElementById('receiptMethod').textContent = "Pelunasan Dipercepat";
+            document.getElementById('receiptMonth').textContent = "Semua Sisa";
+            document.getElementById('receiptAmount').textContent = 'Rp ' + formatRupiah(totalPaidNow);
+            
+            // Ganti Wujud Struk ke Mode Pelunasan (Medali)
+            const icon = document.getElementById('receiptIcon');
+            const title = document.getElementById('receiptTitle');
+            const text = document.getElementById('receiptPelunasanText');
+            const btn = document.getElementById('receiptBtn');
+
+            icon.className = 'fas fa-medal';
+            icon.style.color = 'var(--accent-color)';
+            title.textContent = 'Pelunasan Berhasil!';
+            text.style.display = 'block';
+            btn.onclick = function() { executeResetAfterPelunasan(); };
+            
+            openModal('modalReceipt');
         };
 
         // 7. Deteksi Jaringan (Offline Mode)
