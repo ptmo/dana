@@ -611,7 +611,7 @@
                 </div>
             </div>
 
-<div class="modal-overlay" id="modalPayment">
+        <div class="modal-overlay" id="modalPayment">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Pembayaran Tagihan</h2>
@@ -920,6 +920,16 @@
                 </div>
                 
                 <button class="btn-submit" style="margin-top: 24px;" onclick="closeModal('modalReceipt')">Selesai</button>
+            </div>
+        </div>
+
+        <div class="modal-overlay modal-center" id="modalLunas">
+            <div class="modal-content" style="text-align: center; padding: 40px 24px;">
+                <i class="fas fa-medal" style="font-size: 64px; color: var(--accent-color); margin-bottom: 20px;"></i>
+                <h2 style="margin-bottom: 12px; font-size: 22px;">Pelunasan Berhasil!</h2>
+                <p style="font-size:14px; color:var(--text-muted); line-height:1.6;">
+                    Pinjaman Anda telah lunas, terimakasih sudah menggunakan layanan kami.
+                </p>
             </div>
         </div>
 
@@ -1917,8 +1927,6 @@
             localStorage.removeItem('dana_pinjam_history');
             oldExecuteClearDataHistory();
         };
-
-        /* --- PERBAIKAN REAL-TIME RIWAYAT --- */
         
         // Paksa Riwayat ter-update otomatis setiap kali bayar cicilan bulanan
         const oldConfirmPaymentForHistory = confirmPayment;
