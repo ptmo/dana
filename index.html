@@ -387,14 +387,61 @@
         .notif-text h4 { font-size: 14px; margin-bottom: 4px; font-weight: 600; color: var(--text-main); }
         .notif-text p { font-size: 12px; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
-        /* Toast */
-        .toast {
-            position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
-            background: var(--card-bg); color: var(--text-main); padding: 12px 20px;
-            border-radius: 30px; box-shadow: var(--shadow-modal); font-size: 13px; font-weight: 600;
-            display: flex; align-items: center; gap: 10px; z-index: 200; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            border: 1px solid var(--border-color); width: 90%; max-width: 350px; justify-content: center;
-        }
+        /* --- TOAST NOTIFICATION PREMIUM --- */
+.toast {
+    position: fixed; /* Fixed agar tetap di tempat meski layar discroll */
+    top: -100px; 
+    left: 50%; 
+    transform: translateX(-50%) scale(0.9); /* Skala 0.9 untuk efek membesar saat muncul */
+    opacity: 0;
+    
+    /* Efek Glassmorphism Mahal */
+    background: rgba(255, 255, 255, 0.25); 
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    
+    color: var(--text-main); 
+    padding: 14px 24px;
+    border-radius: 50px; /* Bentuk pil elegan */
+    font-size: 14px; 
+    font-weight: 600;
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    z-index: 9999; 
+    width: max-content; 
+    max-width: 90%;
+    pointer-events: none;
+    
+    /* Animasi Bouncing (Memantul halus seperti Apple/iOS) */
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
+}
+
+/* Penyesuaian Glassmorphism untuk Dark Theme */
+[data-theme="dark"] .toast {
+    background: rgba(11, 28, 61, 0.45); /* Warna dasar DanaGo tembus pandang */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.toast.show { 
+    top: 30px; 
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+}
+
+/* Ukuran Ikon */
+.toast i { 
+    font-size: 20px; 
+    transition: color 0.3s ease; 
+}
+
+/* --- VARIAN WARNA (Sukses, Gagal, Perhatian) + Efek Glowing --- */
+.toast.success i { color: #10B981; filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4)); }
+.toast.error i { color: #EF4444; filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.4)); }
+.toast.warning i { color: #F59E0B; filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4)); }
         .toast.show { top: 20px; }
         .toast i { color: var(--success-color); font-size: 18px; }
 
@@ -472,8 +519,11 @@
 <body>
 
     <div class="mobile-app" id="appContainer">
-        <div class="toast" id="toastBox"><i class="fas fa-check-circle"></i> <span id="toastMsg">Notifikasi</span></div>
-
+        <div class="toast" id="toastBox">
+    <i id="toastIcon" class="fas fa-check-circle"></i> 
+    <span id="toastMsg">Notifikasi</span>
+        </div>
+        
         <header class="header">
             <div class="header-title">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
@@ -1261,12 +1311,42 @@
         };
 
         /* --- NOTIFICATION & TOAST LOGIC --- */
-        function showToast(msg) {
-            const toast = document.getElementById('toastBox');
-            document.getElementById('toastMsg').textContent = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 4000);
-        }
+let toastTimer; // Mencegah bug kedap-kedip jika diklik cepat
+
+function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toastBox');
+    const icon = document.getElementById('toastIcon');
+    const msgEl = document.getElementById('toastMsg');
+
+    // 1. Reset animasi dan timer sebelumnya
+    clearTimeout(toastTimer);
+    toast.classList.remove('show', 'success', 'error', 'warning');
+    
+    // 2. Isi teks pesan
+    msgEl.textContent = msg;
+
+    // 3. Atur Ikon & Warna berdasarkan tipe
+    if (type === 'error') {
+        icon.className = 'fas fa-times-circle'; // Ikon Silang Merah
+        toast.classList.add('error');
+    } else if (type === 'warning') {
+        icon.className = 'fas fa-exclamation-triangle'; // Ikon Seru Kuning
+        toast.classList.add('warning');
+    } else {
+        icon.className = 'fas fa-check-circle'; // Ikon Centang Hijau
+        toast.classList.add('success');
+    }
+
+    // 4. Munculkan Toast (dengan jeda 10ms agar animasi mantulnya mulus)
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    // 5. Sembunyikan otomatis setelah 4 detik
+    toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
+}
 
         /* --- LOGIKA PINJAMAN & PEMBAYARAN --- */
         function generateVerificationNotification() {
