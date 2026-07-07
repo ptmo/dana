@@ -674,19 +674,25 @@
             </div>
 
             <div id="tab-profil" class="tab-content">
-                <div class="card" style="display: flex; align-items: center; gap: 16px;">
-                    <div style="width: 60px; height: 60px; background: var(--accent-color); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; color: var(--primary-color);">AR</div>
-                    <div>
-                        <h3 style="margin-bottom: 4px;">Arie Novra Rosadi</h3>
-                        <p style="font-size: 13px; color: var(--text-muted);">+62 8896737408</p>
-                        <span style="display: inline-block; background: rgba(16, 185, 129, 0.1); color: var(--success-color); font-size: 10px; padding: 4px 8px; border-radius: 4px; margin-top: 8px; font-weight: 600;"><i class="fas fa-check-circle"></i> Akun Terverifikasi</span>
-                    </div>
-                </div>
-                <div class="card" style="padding: 0;">
-                    <div style="padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; cursor: pointer;"><span>Informasi Pribadi</span><i class="fas fa-chevron-right" style="color:var(--text-muted)"></i></div>
-                    
-                    <div style="padding: 16px; display: flex; justify-content: space-between; cursor: pointer;" onclick="openManageBanks()"><span>Daftar Rekening Bank</span><i class="fas fa-chevron-right" style="color:var(--text-muted)"></i></div>
-                </div>
+    <div class="card" style="display: flex; align-items: center; gap: 16px;">
+        
+        <div id="avatarContainer" style="width: 60px; height: 60px; background: var(--accent-color); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; color: var(--primary-color); position: relative; overflow: hidden; cursor: pointer;" title="Klik untuk ganti foto">
+            <span id="avatarInitials">A</span>
+            <img id="profileImage" src="" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none;" alt="Profile">
+        </div>
+        <input type="file" id="profileImageInput" accept="image/*" style="display: none;">
+        
+        <div>
+            <h3 style="margin-bottom: 4px;">Arie Novra Rosadi</h3>
+            <p style="font-size: 13px; color: var(--text-muted);">+62 8896737408</p>
+            <span style="display: inline-block; background: rgba(16, 185, 129, 0.1); color: var(--success-color); font-size: 10px; padding: 4px 8px; border-radius: 4px; margin-top: 8px; font-weight: 600;"><i class="fas fa-check-circle"></i> Akun Terverifikasi</span>
+        </div>
+    </div>
+    <div class="card" style="padding: 0;">
+        <div style="padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; cursor: pointer;"><span>Informasi Pribadi</span><i class="fas fa-chevron-right" style="color:var(--text-muted)"></i></div>
+        
+        <div style="padding: 16px; display: flex; justify-content: space-between; cursor: pointer;" onclick="openManageBanks()"><span>Daftar Rekening Bank</span><i class="fas fa-chevron-right" style="color:var(--text-muted)"></i></div>
+    </div>
             </div>
 
             <div id="tab-pengaturan" class="tab-content">
@@ -2175,6 +2181,59 @@ earlyRepayment = function() {
     triggerLunasSequence(); // Panggil animasi lunas
 };
 
+        // ==========================================
+// FITUR UPLOAD FOTO PROFIL KE LOCAL STORAGE
+// ==========================================
+const avatarContainer = document.getElementById('avatarContainer');
+const profileImageInput = document.getElementById('profileImageInput');
+const profileImage = document.getElementById('profileImage');
+const avatarInitials = document.getElementById('avatarInitials');
+
+// 1. Fungsi muat foto dari Local Storage saat aplikasi dibuka
+function loadProfileImage() {
+    const savedImage = localStorage.getItem('userProfileImage');
+    if (savedImage) {
+        profileImage.src = savedImage;
+        profileImage.style.display = 'block'; // Munculkan gambar
+        avatarInitials.style.display = 'none'; // Sembunyikan tulisan "AR"
+    }
+}
+
+// 2. Jika lingkaran profil diklik, buka galeri hp/komputer
+avatarContainer.addEventListener('click', () => {
+    profileImageInput.click();
+});
+
+// 3. Proses saat foto selesai dipilih dari galeri
+profileImageInput.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    
+    if (file) {
+        // Cek ukuran (Maksimal 2MB agar LocalStorage tidak error/penuh)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Ukuran gambar terlalu besar! Maksimal 2MB.');
+            return;
+        }
+
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const base64Image = e.target.result; // Ubah gambar jadi teks base64
+            
+            // Update tampilan seketika
+            profileImage.src = base64Image;
+            profileImage.style.display = 'block';
+            avatarInitials.style.display = 'none';
+            
+            // Simpan ke Local Storage browser
+            localStorage.setItem('userProfileImage', base64Image);
+        };
+        
+        // Baca file yang diupload
+        reader.readAsDataURL(file);
+    }
+});
+
         // 7. Deteksi Jaringan (Offline Mode)
         window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
         window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));      
@@ -2188,7 +2247,7 @@ earlyRepayment = function() {
         updateDashboardState();
         injectKycUI();
         renderHistoryTab();
-        
+        loadProfileImage();
     </script>
 </body>
 </html>
