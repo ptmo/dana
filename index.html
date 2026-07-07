@@ -1132,7 +1132,7 @@
             const number = document.getElementById('inputNumber').value;
             
             if(!bank || !name || !number) {
-                showToast('Harap isi kelengkapan data!');
+                showToast('Harap isi kelengkapan data!', 'warning');
                 return;
             }
             
@@ -1147,7 +1147,7 @@
             
             closeModal('modalAddBank');
             setTimeout(() => openModal('modalBank'), 300);
-            showToast('Rekening berhasil disimpan');
+            showToast('Rekening berhasil disimpan', 'success');
         }
         
         /* --- DOM ELEMENTS --- */
@@ -1383,7 +1383,7 @@ function showToast(msg, type = 'success') {
             
             notifications.unshift(newNotif); 
             saveAppMemories();
-            showToast('Status detail pinjaman terverifikasi');
+            showToast('Status detail pinjaman terverifikasi', 'success');
             renderNotifications();
             renderPinjamanTab(); // Langsung render tab pinjaman saat disetujui
             updateDashboardState();
@@ -1701,7 +1701,7 @@ function showToast(msg, type = 'success') {
                 localStorage.setItem('dana_pinjam_kyc', 'true');
                 document.getElementById('kycBannerBtn').style.display = 'none';
                 updateDashboardState();
-                showToast('Verifikasi e-KYC Berhasil! Limit Dinaikkan.');
+                showToast('Verifikasi e-KYC Berhasil! Limit Dinaikkan.', 'success');
             }, 2500); // Simulasi AI scan wajah 2.5 detik
         }
 
@@ -1768,7 +1768,7 @@ function showToast(msg, type = 'success') {
             saveAppMemories();
             renderPinjamanTab();
             updateDashboardState();
-            showToast('Pelunasan Dipercepat Berhasil!');
+            showToast('Pelunasan Dipercepat Berhasil!', 'success');
             
             // Tambah nota khusus ke notifikasi
             notifications.unshift({ id: Date.now(), title: 'Pelunasan Dipercepat Berhasil', message: `Anda telah melunasi seluruh sisa tagihan kontrak pinjaman Rp ${formatRupiah(activeLoan.amount)}. Limit Anda kini telah pulih.`, time: 'Baru Saja', isRead: false });
@@ -1934,7 +1934,7 @@ function showToast(msg, type = 'success') {
             
             notifications.unshift(newNotif); 
             saveAppMemories();
-            showToast('Dana berhasil dicairkan!');
+            showToast('Dana berhasil dicairkan!', 'success');
             renderNotifications();
             renderPinjamanTab(); 
             updateDashboardState();
@@ -2135,7 +2135,7 @@ function showToast(msg, type = 'success') {
             const number = document.getElementById('inputNumber').value;
             
             if(!bank || !name || !number) {
-                showToast('Harap isi kelengkapan data!');
+                showToast('Harap isi kelengkapan data!', 'warning');
                 return;
             }
             
@@ -2156,7 +2156,7 @@ function showToast(msg, type = 'success') {
             } else {
                 setTimeout(() => openModal('modalBank'), 300);
             }
-            showToast('Rekening berhasil disimpan');
+            showToast('Rekening berhasil disimpan', 'success');
         };
 
 /* --- LOGIKA PELUNASAN OTOMATIS (TANPA TOMBOL) --- */
@@ -2291,7 +2291,7 @@ profileImageInput.addEventListener('change', function(event) {
     if (file) {
         // Cek ukuran (Maksimal 2MB agar LocalStorage tidak error/penuh)
         if (file.size > 2 * 1024 * 1024) {
-            alert('Ukuran gambar terlalu besar! Maksimal 2MB.');
+            showToast('Ukuran gambar terlalu besar! Maksimal 2MB.', 'warning');
             return;
         }
 
