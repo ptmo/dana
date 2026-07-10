@@ -1050,7 +1050,7 @@
 
     <script>
         /* --- STATE, DATA NOTIF, BANK & PINJAMAN (LOCAL STORAGE) --- */
-        let state = { amount: 500000, tenor: 6, rate: 0.065, adminFeeRate: 0.005, theme: 'light' };
+        let state = { amount: 500000, tenor: 6, rate: 0.065, adminFeeRate: 0.01, theme: 'light' };
         let selectedInstallmentIndex = null; // Menyimpan index cicilan yang mau dibayar
 
         let notifications = JSON.parse(localStorage.getItem('dana_pinjam_notif')) || [];
