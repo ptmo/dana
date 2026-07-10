@@ -1175,7 +1175,7 @@
             
             // Logika Bunga Dinamis: Semakin lama tenor, bunga sedikit lebih besar
             let dynamicRate;
-            if (T === 3) dynamicRate = 0.0575; // 6%
+            if (T === 3) dynamicRate = 0.06; // 6%
             else if (T === 6) dynamicRate = 0.065; // ~7.33% (Angka spesifik agar 1.25jt = pas cicilan 300rb)
             else if (T === 9) dynamicRate = 0.075; // 8%
             else dynamicRate = 0.085; // 12 bulan = 8.5%
