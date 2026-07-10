@@ -578,7 +578,7 @@
                 <div class="result-section">
                     <div class="result-row">
                         <span class="result-label">Suku Bunga</span>
-                        <span class="result-value">7% / bln</span>
+                        <span class="result-value">6,5% / bln</span>
                     </div>
                     <div class="result-row">
                         <span class="result-label">Estimasi Cicilan</span>
@@ -1050,7 +1050,7 @@
 
     <script>
         /* --- STATE, DATA NOTIF, BANK & PINJAMAN (LOCAL STORAGE) --- */
-        let state = { amount: 500000, tenor: 6, rate: 0.07, adminFeeRate: 0.005, theme: 'light' };
+        let state = { amount: 500000, tenor: 6, rate: 0.065, adminFeeRate: 0.005, theme: 'light' };
         let selectedInstallmentIndex = null; // Menyimpan index cicilan yang mau dibayar
 
         let notifications = JSON.parse(localStorage.getItem('dana_pinjam_notif')) || [];
@@ -1175,9 +1175,9 @@
             
             // Logika Bunga Dinamis: Semakin lama tenor, bunga sedikit lebih besar
             let dynamicRate;
-            if (T === 3) dynamicRate = 0.06; // 6%
-            else if (T === 6) dynamicRate = 0.07; // ~7.33% (Angka spesifik agar 1.25jt = pas cicilan 300rb)
-            else if (T === 9) dynamicRate = 0.08; // 8%
+            if (T === 3) dynamicRate = 0.0575; // 6%
+            else if (T === 6) dynamicRate = 0.065; // ~7.33% (Angka spesifik agar 1.25jt = pas cicilan 300rb)
+            else if (T === 9) dynamicRate = 0.075; // 8%
             else dynamicRate = 0.085; // 12 bulan = 8.5%
             
             state.rate = dynamicRate; // Update rate di state
