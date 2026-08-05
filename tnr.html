@@ -203,11 +203,12 @@
             padding: 0 10px;
             z-index: 1000;
         }
+
         .nav-item {
             border: none;
             background: transparent;
             color: var(--text-muted);
-            font-size: 1.2rem;
+            font-size: 1.3rem; /* Sedikit diperbesar agar ikon lebih jelas */
             width: 50px;
             height: 50px;
             border-radius: 50%;
@@ -217,9 +218,14 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
+
+        /* [UBAH] Efek Cekung (Inset) pada menu yang aktif */
         .nav-item.active {
             color: var(--accent);
-            box-shadow: var(--shadow-inset);
+            background: var(--bg-color); /* Pastikan background sama dengan var bg */
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.7), 
+                        inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+            transform: scale(0.95); /* Memberikan efek sedikit ditekan */
         }
         
         /* Utility */
