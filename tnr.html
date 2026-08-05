@@ -289,6 +289,32 @@
 .modal-overlay.show {
     transform: none;
 }
+
+        /* Gaya Tanggal Jatuh Tempo */
+.jatuh-tempo {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-weight: 400;
+}
+
+/* Efek Abu-abu Chromatic untuk Item Lunas */
+.item-lunas {
+    filter: grayscale(100%);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+/* Dead Button untuk Pembayaran Berhasil */
+.btn-success {
+    color: #00b894;
+    box-shadow: var(--shadow-inset); /* Tampilan tombol tertekan ke dalam */
+    cursor: not-allowed;
+    pointer-events: none; /* Membuat tombol tidak bisa diklik */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
     </style>
 </head>
 <body>
@@ -394,8 +420,20 @@
         totalHutang: 0,
         tenor: 0,
         perBulan: 0,
-        paidMonths: []
+        paidMonths: [],
+        createdAt: null
     };
+
+    const formatTanggal = (isoString, tambahanBulan) => {
+    if (!isoString) return '-';
+    let date = new Date(isoString);
+    date.setMonth(date.getMonth() + tambahanBulan);
+    return date.toLocaleDateString('id-ID', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+    });
+};
 
     // Inisialisasi Aplikasi
     function initApp() {
@@ -435,21 +473,21 @@
 
         // Generate Rincian Bulanan
         for (let i = 1; i <= appData.tenor; i++) {
-    // Cek apakah bulan ini sudah ada di array paidMonths
     const isPaid = appData.paidMonths && appData.paidMonths.includes(i);
+    const tglJatuhTempo = formatTanggal(appData.createdAt, i);
     
     const div = document.createElement('div');
-    div.className = 'list-item';
+    // Tambahkan class item-lunas jika sudah dibayar untuk efek chromatic
+    div.className = `list-item ${isPaid ? 'item-lunas' : ''}`; 
     div.innerHTML = `
         <div class="list-item-info">
             <div class="month">Bulan ke-${i}</div>
-            <div class="nominal" style="${isPaid ? 'color: var(--text-muted); text-decoration: line-through;' : ''}">
-                ${formatRupiah(appData.perBulan)}
-            </div>
+            <div class="nominal">${formatRupiah(appData.perBulan)}</div>
+            <div class="jatuh-tempo"><i class="fa-regular fa-calendar"></i> ${tglJatuhTempo}</div>
         </div>
         <div>
             ${isPaid 
-                ? `<div class="badge-lunas"><i class="fa-solid fa-check-double"></i> Lunas</div>` 
+                ? `<button class="btn btn-sm btn-success" disabled>Berhasil <i class="fa-solid fa-check"></i></button>` 
                 : `<button class="btn btn-sm btn-primary" onclick="konfirmasiBayar(${i})">Bayar</button>`
             }
         </div>
@@ -460,44 +498,45 @@
 
     // Handle Form Submit
     document.getElementById('form-pengaturan').addEventListener('submit', function(e) {
-        e.preventDefault();
+    e.preventDefault();
+    
+    const hutang = parseFloat(document.getElementById('input-hutang').value);
+    const tenor = parseInt(document.getElementById('input-tenor').value);
+    
+    if (hutang > 0 && tenor > 0) {
+        appData.totalHutang = hutang;
+        appData.tenor = tenor;
+        appData.perBulan = hutang / tenor;
         
-        const hutang = parseFloat(document.getElementById('input-hutang').value);
-        const tenor = parseInt(document.getElementById('input-tenor').value);
+        // Simpan tanggal saat ini jika belum ada
+        if (!appData.createdAt) {
+            appData.createdAt = new Date().toISOString();
+        }
         
-        if (hutang > 0 && tenor > 0) {
-            appData.totalHutang = hutang;
-            appData.tenor = tenor;
-            appData.perBulan = hutang / tenor;
-            
-            // Simpan ke Local Storage
-            localStorage.setItem('debtAppData', JSON.stringify(appData));
-            
-            updateUI();
-            
-            // Berikan feedback visual pada tombol
-            const btn = e.target.querySelector('button');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersimpan!';
-            btn.style.color = '#00b894';
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.color = 'var(--accent)';
-            }, 2000);
+        localStorage.setItem('debtAppData', JSON.stringify(appData));
+        updateUI();
+        
+        const btn = e.target.querySelector('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersimpan!';
+        btn.style.color = '#00b894';
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.style.color = 'var(--accent)';
+        }, 2000);
         }
     });
 
     // Handle Reset Data
     function resetData() {
-        if(confirm('Apakah Anda yakin ingin mereset seluruh data tagihan?')) {
-            appData = { totalHutang: 0, tenor: 0, perBulan: 0 };
-            localStorage.removeItem('debtAppData');
-            document.getElementById('input-hutang').value = '';
-            document.getElementById('input-tenor').value = '';
-            updateUI();
-            switchView('dashboard', document.querySelector('.nav-item')); // Kembali ke dashboard
-        }
+    if(confirm('Apakah Anda yakin ingin mereset seluruh data tagihan?')) {
+        appData = { totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [], createdAt: null };
+        localStorage.removeItem('debtAppData');
+        document.getElementById('input-hutang').value = '';
+        document.getElementById('input-tenor').value = '';
+        updateUI();
+        switchView('dashboard', document.querySelector('.nav-item')); 
+    }
     }
 
     // Navigasi Bottom Nav
