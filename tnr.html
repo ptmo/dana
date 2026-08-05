@@ -570,17 +570,22 @@ function konfirmasiBayar(bulan) {
     document.getElementById('btn-confirm-pay').onclick = prosesPembayaran;
 }
 
+// [UBAH] Fungsi Proses Pembayaran
 function prosesPembayaran() {
+    // 1. Simpan nilai bulan ke variabel sementara sebelum di-reset oleh closeModal
+    const bulanYangDibayar = currentPaymentMonth; 
+    
+    // 2. Tutup modal (ini akan mereset currentPaymentMonth menjadi null)
     closeModal('modal-confirm');
     
-    // Pastikan properti paidMonths ada, lalu simpan state
+    // 3. Gunakan variabel sementara untuk menyimpan data
     if (!appData.paidMonths) appData.paidMonths = [];
-    if (!appData.paidMonths.includes(currentPaymentMonth)) {
-        appData.paidMonths.push(currentPaymentMonth);
+    if (!appData.paidMonths.includes(bulanYangDibayar)) {
+        appData.paidMonths.push(bulanYangDibayar); // Masukkan angkanya, bukan null
         localStorage.setItem('debtAppData', JSON.stringify(appData));
     }
     
-    updateUI();
+    updateUI(); // Segarkan tampilan (tombol akan berubah menjadi abu-abu)
 
     setTimeout(() => {
         document.getElementById('modal-overlay').classList.add('show');
@@ -592,18 +597,6 @@ function closeModal(modalId) {
     document.getElementById(modalId).classList.remove('show');
     document.getElementById('modal-overlay').classList.remove('show');
     currentPaymentMonth = null;
-}
-
-// [UBAH] Fungsi resetData() agar juga mereset array paidMonths
-function resetData() {
-    if(confirm('Apakah Anda yakin ingin mereset seluruh data tagihan?')) {
-        appData = { totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [] };
-        localStorage.removeItem('debtAppData');
-        document.getElementById('input-hutang').value = '';
-        document.getElementById('input-tenor').value = '';
-        updateUI();
-        switchView('dashboard', document.querySelector('.nav-item')); 
-    }
 }
 
     // Jalankan inisialisasi saat web dimuat
