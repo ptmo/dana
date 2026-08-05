@@ -315,6 +315,22 @@
     align-items: center;
     gap: 6px;
 }
+
+        /* Gaya Rincian Struk Dashboard */
+.struk-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed rgba(99, 110, 114, 0.3);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.struk-value {
+    font-weight: 600;
+    color: var(--text-main);
+    text-align: right;
+}
     </style>
 </head>
 <body>
@@ -337,6 +353,27 @@
             <div class="amount" id="dash-perbulan" style="font-size: 1.6rem;">Rp 0</div>
             <p style="color: var(--text-muted); font-size: 0.85rem;">Est. cicilan tetap bulanan</p>
         </div>
+
+        <!-- [TAMBAH] Card Rincian Struk di Dashboard -->
+        <div class="card" id="card-struk" style="display: none; margin-top: 20px; text-align: left;">
+            <h2 style="text-align: center; margin-bottom: 15px; color: var(--text-main);"><i class="fa-solid fa-receipt" style="color: var(--accent);"></i> Rincian Struk</h2>
+            <div class="struk-item">
+                <span>Nama Peminjam</span>
+                <span id="struk-nama" class="struk-value">-</span>
+            </div>
+            <div class="struk-item">
+                <span>ID</span>
+                <span id="struk-id" class="struk-value">-</span>
+            </div>
+            <div class="struk-item">
+                <span>Total Hutang</span>
+                <span id="struk-hutang" class="struk-value">-</span>
+            </div>
+            <div class="struk-item" style="border-bottom: none; flex-direction: column; align-items: flex-start; gap: 5px;">
+                <span>Waktu Pengajuan</span>
+                <span id="struk-waktu" class="struk-value" style="font-size: 0.75rem; text-align: left;">-</span>
+            </div>
+        </div>
     </section>
 
     <!-- VIEW: TAGIHAN -->
@@ -350,6 +387,12 @@
     <section id="view-pengaturan" class="view">
         <div class="card" style="text-align: left; padding: 20px;">
             <form id="form-pengaturan">
+                
+                <div class="form-group">
+                    <label for="input-nama">Nama Peminjam</label>
+                    <input type="text" id="input-nama" class="form-control" placeholder="Contoh: Budi Santoso" required>
+                </div>
+                
                 <div class="form-group">
                     <label for="input-hutang">Jumlah Hutang (Rp)</label>
                     <input type="number" id="input-hutang" class="form-control" placeholder="Contoh: 10000000" required>
@@ -426,7 +469,9 @@
         tenor: 0,
         perBulan: 0,
         paidMonths: [],
-        createdAt: null
+        createdAt: null,
+        namaPeminjam: "",
+        idUnik: ""
     };
 
     const formatTanggal = (isoString, tambahanBulan) => {
@@ -440,6 +485,17 @@
     });
 };
 
+    const formatWaktuLengkap = (isoString) => {
+        if (!isoString) return '-';
+        const date = new Date(isoString);
+        const options = { 
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        };
+        // Mengganti titik menjadi titik dua (:) untuk jam/menit/detik
+        return date.toLocaleDateString('id-ID', options).replace(/\./g, ':'); 
+    };
+
     // Inisialisasi Aplikasi
     function initApp() {
         const savedData = localStorage.getItem('debtAppData');
@@ -448,11 +504,11 @@
         }
         updateUI();
         
-        // Isi form dengan data yang ada
         if(appData.totalHutang > 0) {
+            document.getElementById('input-nama').value = appData.namaPeminjam || ""; // Load nama
             document.getElementById('input-hutang').value = appData.totalHutang;
             document.getElementById('input-tenor').value = appData.tenor;
-            document.getElementById('input-perbulan').value = appData.perBulan; // Load nilai custom
+            document.getElementById('input-perbulan').value = appData.perBulan;
         }
     }
 
@@ -463,6 +519,17 @@
         document.getElementById('dash-tenor').innerText = `Tenor: ${appData.tenor} Bulan`;
         document.getElementById('dash-perbulan').innerText = formatRupiah(appData.perBulan);
 
+        // Render Rincian Struk
+        if (appData.totalHutang > 0) {
+            document.getElementById('card-struk').style.display = 'block';
+            document.getElementById('struk-nama').innerText = appData.namaPeminjam || '-';
+            document.getElementById('struk-id').innerText = appData.idUnik || '-';
+            document.getElementById('struk-hutang').innerText = formatRupiah(appData.totalHutang);
+            document.getElementById('struk-waktu').innerText = formatWaktuLengkap(appData.createdAt);
+        } else {
+            document.getElementById('card-struk').style.display = 'none';
+        }
+        
         // Update List Tagihan
         const tagihanList = document.getElementById('tagihan-list');
         tagihanList.innerHTML = ''; // Bersihkan list
@@ -506,24 +573,33 @@
     document.getElementById('form-pengaturan').addEventListener('submit', function(e) {
         e.preventDefault();
         
+        const nama = document.getElementById('input-nama').value;
         const hutang = parseFloat(document.getElementById('input-hutang').value);
         const tenor = parseInt(document.getElementById('input-tenor').value);
-        const inputPerBulan = document.getElementById('input-perbulan').value; // Ambil nilai input baru
+        const inputPerBulan = document.getElementById('input-perbulan').value;
         
         if (hutang > 0 && tenor > 0) {
+            appData.namaPeminjam = nama;
             appData.totalHutang = hutang;
             appData.tenor = tenor;
             
-            // Cek jika user memasukkan nominal custom, gunakan itu. Jika tidak, bagi otomatis.
             if (inputPerBulan && parseFloat(inputPerBulan) > 0) {
                 appData.perBulan = parseFloat(inputPerBulan);
             } else {
                 appData.perBulan = hutang / tenor;
             }
             
-            // Simpan tanggal saat ini jika belum ada
+            // Simpan tanggal pengajuan dengan jam, menit, detik
             if (!appData.createdAt) {
                 appData.createdAt = new Date().toISOString();
+            }
+
+            // Generate ID Unik Sinkron (Contoh: TNR-20260805-4321)
+            if (!appData.idUnik) {
+                const d = new Date();
+                const datePart = `${d.getFullYear()}${(d.getMonth()+1).toString().padStart(2,'0')}${d.getDate().toString().padStart(2,'0')}`;
+                const randomPart = Math.floor(1000 + Math.random() * 9000); // 4 digit angka acak
+                appData.idUnik = `TNR-${datePart}-${randomPart}`;
             }
             
             localStorage.setItem('debtAppData', JSON.stringify(appData));
@@ -540,14 +616,15 @@
         }
     });
 
-    // [UBAH] Handle Reset Data
+    // [UBAH] Handle Reset Data (Kosongkan nama dan id unik)
     function resetData() {
         if(confirm('Apakah Anda yakin ingin mereset seluruh data tagihan?')) {
-            appData = { totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [], createdAt: null };
+            appData = { totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [], createdAt: null, namaPeminjam: "", idUnik: "" };
             localStorage.removeItem('debtAppData');
+            document.getElementById('input-nama').value = '';
             document.getElementById('input-hutang').value = '';
             document.getElementById('input-tenor').value = '';
-            document.getElementById('input-perbulan').value = ''; // Kosongkan input baru
+            document.getElementById('input-perbulan').value = '';
             updateUI();
             switchView('dashboard', document.querySelector('.nav-item')); 
         }
