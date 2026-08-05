@@ -360,6 +360,11 @@
                     <input type="number" id="input-tenor" class="form-control" placeholder="Contoh: 12" required min="1" max="120">
                 </div>
 
+                <div class="form-group">
+                    <label for="input-perbulan">Nominal Per Bulan (Rp) - <i>Opsional</i></label>
+                    <input type="number" id="input-perbulan" class="form-control" placeholder="Kosongkan untuk hitung otomatis">
+                </div>
+
                 <button type="submit" class="btn btn-primary">
                     <i class="fa-solid fa-floppy-disk"></i> Simpan Kalkulasi
                 </button>
@@ -447,6 +452,7 @@
         if(appData.totalHutang > 0) {
             document.getElementById('input-hutang').value = appData.totalHutang;
             document.getElementById('input-tenor').value = appData.tenor;
+            document.getElementById('input-perbulan').value = appData.perBulan; // Load nilai custom
         }
     }
 
@@ -498,47 +504,55 @@
 
     // Handle Form Submit
     document.getElementById('form-pengaturan').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const hutang = parseFloat(document.getElementById('input-hutang').value);
-    const tenor = parseInt(document.getElementById('input-tenor').value);
-    
-    if (hutang > 0 && tenor > 0) {
-        appData.totalHutang = hutang;
-        appData.tenor = tenor;
-        appData.perBulan = hutang / tenor;
+        e.preventDefault();
         
-        // Simpan tanggal saat ini jika belum ada
-        if (!appData.createdAt) {
-            appData.createdAt = new Date().toISOString();
-        }
+        const hutang = parseFloat(document.getElementById('input-hutang').value);
+        const tenor = parseInt(document.getElementById('input-tenor').value);
+        const inputPerBulan = document.getElementById('input-perbulan').value; // Ambil nilai input baru
         
-        localStorage.setItem('debtAppData', JSON.stringify(appData));
-        updateUI();
-        
-        const btn = e.target.querySelector('button');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersimpan!';
-        btn.style.color = '#00b894';
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.style.color = 'var(--accent)';
-        }, 2000);
+        if (hutang > 0 && tenor > 0) {
+            appData.totalHutang = hutang;
+            appData.tenor = tenor;
+            
+            // Cek jika user memasukkan nominal custom, gunakan itu. Jika tidak, bagi otomatis.
+            if (inputPerBulan && parseFloat(inputPerBulan) > 0) {
+                appData.perBulan = parseFloat(inputPerBulan);
+            } else {
+                appData.perBulan = hutang / tenor;
+            }
+            
+            // Simpan tanggal saat ini jika belum ada
+            if (!appData.createdAt) {
+                appData.createdAt = new Date().toISOString();
+            }
+            
+            localStorage.setItem('debtAppData', JSON.stringify(appData));
+            updateUI();
+            
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersimpan!';
+            btn.style.color = '#00b894';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.color = 'var(--accent)';
+            }, 2000);
         }
     });
 
-    // Handle Reset Data
+    // [UBAH] Handle Reset Data
     function resetData() {
-    if(confirm('Apakah Anda yakin ingin mereset seluruh data tagihan?')) {
-        appData = { totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [], createdAt: null };
-        localStorage.removeItem('debtAppData');
-        document.getElementById('input-hutang').value = '';
-        document.getElementById('input-tenor').value = '';
-        updateUI();
-        switchView('dashboard', document.querySelector('.nav-item')); 
+        if(confirm('Apakah Anda yakin ingin mereset seluruh data tagihan?')) {
+            appData = { totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [], createdAt: null };
+            localStorage.removeItem('debtAppData');
+            document.getElementById('input-hutang').value = '';
+            document.getElementById('input-tenor').value = '';
+            document.getElementById('input-perbulan').value = ''; // Kosongkan input baru
+            updateUI();
+            switchView('dashboard', document.querySelector('.nav-item')); 
+        }
     }
-    }
-
+    
     // Navigasi Bottom Nav
     function switchView(viewName, element) {
         // Update Nav Active State
