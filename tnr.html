@@ -233,6 +233,62 @@
             margin-bottom: 15px;
             opacity: 0.5;
         }
+
+        /* Gaya Tombol Bayar & Status Lunas */
+.btn-sm {
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    margin-bottom: 0;
+    width: auto;
+}
+.badge-lunas {
+    color: #00b894;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.list-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+/* Gaya Modal Popup Neumorphism */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1001;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: var(--bg-color);
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-outset);
+    z-index: 1002;
+    width: 85%;
+    max-width: 350px;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+.modal.show, .modal-overlay.show {
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+.modal-overlay.show {
+    transform: none;
+}
     </style>
 </head>
 <body>
@@ -303,6 +359,25 @@
     </nav>
 </div>
 
+<!-- Overlay & Modal Konfirmasi -->
+<div id="modal-overlay" class="modal-overlay"></div>
+
+<div id="modal-confirm" class="modal">
+    <h3 style="margin-bottom: 10px;">Konfirmasi Pembayaran</h3>
+    <p id="confirm-text" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;"></p>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn" onclick="closeModal('modal-confirm')" style="margin-bottom: 0;">Batal</button>
+        <button class="btn btn-primary" id="btn-confirm-pay" style="margin-bottom: 0;">Bayar</button>
+    </div>
+</div>
+
+<!-- Modal Sukses -->
+<div id="modal-success" class="modal" style="text-align: center;">
+    <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: #00b894; margin-bottom: 15px;"></i>
+    <h3 style="margin-bottom: 10px;">Pembayaran Berhasil!</h3>
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Tagihan bulan ini telah dilunasi.</p>
+    <button class="btn btn-primary" onclick="closeModal('modal-success')" style="margin-bottom: 0;">Tutup</button>
+</div>
 <script>
     // Konfigurasi State Format Rupiah
     const formatRupiah = (angka) => {
@@ -319,6 +394,7 @@
         totalHutang: 0,
         tenor: 0,
         perBulan: 0
+        paidMonths: []
     };
 
     // Inisialisasi Aplikasi
@@ -359,13 +435,26 @@
 
         // Generate Rincian Bulanan
         for (let i = 1; i <= appData.tenor; i++) {
-            const div = document.createElement('div');
-            div.className = 'list-item';
-            div.innerHTML = `
-                <div class="month">Bulan ke-${i}</div>
-                <div class="nominal">${formatRupiah(appData.perBulan)}</div>
-            `;
-            tagihanList.appendChild(div);
+    // Cek apakah bulan ini sudah ada di array paidMonths
+    const isPaid = appData.paidMonths && appData.paidMonths.includes(i);
+    
+    const div = document.createElement('div');
+    div.className = 'list-item';
+    div.innerHTML = `
+        <div class="list-item-info">
+            <div class="month">Bulan ke-${i}</div>
+            <div class="nominal" style="${isPaid ? 'color: var(--text-muted); text-decoration: line-through;' : ''}">
+                ${formatRupiah(appData.perBulan)}
+            </div>
+        </div>
+        <div>
+            ${isPaid 
+                ? `<div class="badge-lunas"><i class="fa-solid fa-check-double"></i> Lunas</div>` 
+                : `<button class="btn btn-sm btn-primary" onclick="konfirmasiBayar(${i})">Bayar</button>`
+            }
+        </div>
+    `;
+    tagihanList.appendChild(div);
         }
     }
 
@@ -429,6 +518,54 @@
         };
         document.getElementById('header-title').innerText = titleMap[viewName];
     }
+
+    let currentPaymentMonth = null;
+
+function konfirmasiBayar(bulan) {
+    currentPaymentMonth = bulan;
+    document.getElementById('confirm-text').innerHTML = `Bayar tagihan <b>Bulan ke-${bulan}</b> sebesar <b>${formatRupiah(appData.perBulan)}</b>?`;
+    
+    document.getElementById('modal-overlay').classList.add('show');
+    document.getElementById('modal-confirm').classList.add('show');
+    
+    document.getElementById('btn-confirm-pay').onclick = prosesPembayaran;
+}
+
+function prosesPembayaran() {
+    closeModal('modal-confirm');
+    
+    // Pastikan properti paidMonths ada, lalu simpan state
+    if (!appData.paidMonths) appData.paidMonths = [];
+    if (!appData.paidMonths.includes(currentPaymentMonth)) {
+        appData.paidMonths.push(currentPaymentMonth);
+        localStorage.setItem('debtAppData', JSON.stringify(appData));
+    }
+    
+    updateUI();
+
+    setTimeout(() => {
+        document.getElementById('modal-overlay').classList.add('show');
+        document.getElementById('modal-success').classList.add('show');
+    }, 200); 
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+    document.getElementById('modal-overlay').classList.remove('show');
+    currentPaymentMonth = null;
+}
+
+// [UBAH] Fungsi resetData() agar juga mereset array paidMonths
+function resetData() {
+    if(confirm('Apakah Anda yakin ingin mereset seluruh data tagihan?')) {
+        appData = { totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [] };
+        localStorage.removeItem('debtAppData');
+        document.getElementById('input-hutang').value = '';
+        document.getElementById('input-tenor').value = '';
+        updateUI();
+        switchView('dashboard', document.querySelector('.nav-item')); 
+    }
+}
 
     // Jalankan inisialisasi saat web dimuat
     document.addEventListener('DOMContentLoaded', initApp);
