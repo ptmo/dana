@@ -337,13 +337,64 @@
     color: var(--text-main);
     text-align: right;
 }
+
+        /* Gaya Tombol Icon Header */
+.btn-icon {
+    background: var(--bg-color);
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    box-shadow: var(--shadow-outset);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.btn-icon:active { box-shadow: var(--shadow-inset); color: var(--accent); }
+
+/* Gaya Item Daftar Akun */
+.akun-item {
+    background: var(--bg-color);
+    border-radius: 15px;
+    padding: 15px 20px;
+    box-shadow: var(--shadow-outset);
+    margin-bottom: 15px;
+    text-align: left;
+    transition: all 0.3s ease;
+}
+.akun-item.active-akun {
+    box-shadow: var(--shadow-inset);
+    border: 1px solid rgba(9, 132, 227, 0.3);
+}
+.akun-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.akun-nama {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 1.1rem;
+}
+.akun-actions {
+    display: flex;
+    gap: 8px;
+}
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <header>
+    <header style="display: flex; justify-content: space-between; align-items: center;">
         <h1 id="header-title">Dashboard</h1>
+        <button onclick="bukaHalamanAkun()" class="btn-icon">
+            <i class="fa-solid fa-users"></i>
+        </button>
     </header>
 
     <!-- VIEW: DASHBOARD -->
@@ -425,6 +476,16 @@
         </button>
     </section>
 
+    <!-- VIEW: DAFTAR AKUN -->
+    <section id="view-akun" class="view">
+        <button class="btn btn-primary" onclick="buatAkunBaru()" style="margin-bottom: 20px;">
+            <i class="fa-solid fa-user-plus"></i> Tambah Akun Baru
+        </button>
+        <div id="akun-list" class="list-group">
+            <!-- List Akun akan dirender di sini via JS -->
+        </div>
+    </section>
+
     <!-- BOTTOM NAVIGATION -->
     <nav class="bottom-nav">
         <button class="nav-item active" onclick="switchView('dashboard', this)">
@@ -469,17 +530,6 @@
         }).format(angka);
     };
 
-    // State Management
-    let appData = {
-        totalHutang: 0,
-        tenor: 0,
-        perBulan: 0,
-        paidMonths: [],
-        createdAt: null,
-        namaPeminjam: "",
-        idUnik: ""
-    };
-
     const formatTanggal = (isoString, tambahanBulan) => {
     if (!isoString) return '-';
     let date = new Date(isoString);
@@ -502,20 +552,62 @@
         return date.toLocaleDateString('id-ID', options).replace(/\./g, ':'); 
     };
 
-    // Inisialisasi Aplikasi
+    // State Management Multi-Akun
+    let dbAccounts = [];
+    let appData = {
+        id: null, // ID Database Akun
+        totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [],
+        createdAt: null, namaPeminjam: "", idUnik: ""
+    };
+
+    // Fungsi menyimpan ke Multi-Akun Array
+    function saveDB() {
+        if (!appData.id) appData.id = "AKUN-" + Date.now();
+        const idx = dbAccounts.findIndex(a => a.id === appData.id);
+        if (idx > -1) {
+            dbAccounts[idx] = { ...appData };
+        } else {
+            dbAccounts.push({ ...appData });
+        }
+        localStorage.setItem('debtActiveId', appData.id);
+        localStorage.setItem('debtAppAccounts', JSON.stringify(dbAccounts));
+    }
+
+    // Inisialisasi Aplikasi (Termasuk Migrasi Data Lama)
     function initApp() {
-        const savedData = localStorage.getItem('debtAppData');
-        if (savedData) {
-            appData = JSON.parse(savedData);
-        }
-        updateUI();
+        const oldData = localStorage.getItem('debtAppData');
+        let accountsSaved = localStorage.getItem('debtAppAccounts');
         
-        if(appData.totalHutang > 0) {
-            document.getElementById('input-nama').value = appData.namaPeminjam || ""; // Load nama
-            document.getElementById('input-hutang').value = appData.totalHutang;
-            document.getElementById('input-tenor').value = appData.tenor;
-            document.getElementById('input-perbulan').value = appData.perBulan;
+        // Cek data multi-akun, jika kosong cek data versi lama untuk dimigrasi
+        if (accountsSaved) {
+            dbAccounts = JSON.parse(accountsSaved);
+        } else if (oldData) {
+            let parsedOld = JSON.parse(oldData);
+            parsedOld.id = "AKUN-" + Date.now();
+            dbAccounts.push(parsedOld);
+            localStorage.removeItem('debtAppData'); 
+            localStorage.setItem('debtAppAccounts', JSON.stringify(dbAccounts));
         }
+
+        const savedActiveId = localStorage.getItem('debtActiveId');
+        if (savedActiveId && dbAccounts.length > 0) {
+            const found = dbAccounts.find(a => a.id === savedActiveId);
+            appData = found ? { ...found } : { ...dbAccounts[0] };
+        } else if (dbAccounts.length > 0) {
+            appData = { ...dbAccounts[0] };
+        }
+
+        if(appData.id) localStorage.setItem('debtActiveId', appData.id);
+        
+        isiFormDariState();
+        updateUI();
+    }
+
+    function isiFormDariState() {
+        document.getElementById('input-nama').value = appData.namaPeminjam || "";
+        document.getElementById('input-hutang').value = appData.totalHutang || "";
+        document.getElementById('input-tenor').value = appData.tenor || "";
+        document.getElementById('input-perbulan').value = (appData.perBulan && appData.totalHutang > 0) ? appData.perBulan : "";
     }
 
     // Update Seluruh UI
@@ -600,15 +692,17 @@
                 appData.createdAt = new Date().toISOString();
             }
 
-            // Generate ID Unik Sinkron (Contoh: TNR-20260805-4321)
+            // Generate ID Unik Sinkron...
             if (!appData.idUnik) {
                 const d = new Date();
                 const datePart = `${d.getFullYear()}${(d.getMonth()+1).toString().padStart(2,'0')}${d.getDate().toString().padStart(2,'0')}`;
-                const randomPart = Math.floor(1000 + Math.random() * 9000); // 4 digit angka acak
+                const randomPart = Math.floor(1000 + Math.random() * 9000);
                 appData.idUnik = `TNR-${datePart}-${randomPart}`;
             }
             
-            localStorage.setItem('debtAppData', JSON.stringify(appData));
+            // GANTI MENJADI INI:
+            saveDB();
+            
             updateUI();
             
             const btn = e.target.querySelector('button');
@@ -622,17 +716,79 @@
         }
     });
 
-    // [UBAH] Handle Reset Data (Kosongkan nama dan id unik)
-    function resetData() {
-        if(confirm('Apakah Anda yakin ingin mereset seluruh data tagihan?')) {
-            appData = { totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [], createdAt: null, namaPeminjam: "", idUnik: "" };
-            localStorage.removeItem('debtAppData');
-            document.getElementById('input-nama').value = '';
-            document.getElementById('input-hutang').value = '';
-            document.getElementById('input-tenor').value = '';
-            document.getElementById('input-perbulan').value = '';
+    function renderAkunList() {
+        const akunList = document.getElementById('akun-list');
+        akunList.innerHTML = '';
+        
+        if (dbAccounts.length === 0) {
+            akunList.innerHTML = `<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>Belum ada data peminjam.</p></div>`;
+            return;
+        }
+
+        dbAccounts.forEach(akun => {
+            const isActive = appData.id === akun.id;
+            akunList.innerHTML += `
+                <div class="akun-item ${isActive ? 'active-akun' : ''}">
+                    <div class="akun-header">
+                        <div class="akun-nama">${akun.namaPeminjam || 'Tanpa Nama'}</div>
+                        <div class="akun-actions">
+                            ${!isActive ? `<button class="btn btn-sm btn-primary" onclick="pilihAkun('${akun.id}')" style="margin:0;"><i class="fa-solid fa-folder-open"></i> Buka</button>` : `<span class="badge-lunas" style="margin-right:5px;"><i class="fa-solid fa-check-circle"></i> Aktif</span>`}
+                            <button class="btn btn-sm btn-danger" onclick="hapusAkun('${akun.id}')" style="margin:0; width:40px;"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">
+                        Hutang: ${formatRupiah(akun.totalHutang)} | Tenor: ${akun.tenor} Bln
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function bukaHalamanAkun() {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.getElementById('view-akun').classList.add('active');
+        document.getElementById('header-title').innerText = 'Daftar Akun / Peminjam';
+        renderAkunList();
+    }
+
+    function pilihAkun(id) {
+        const found = dbAccounts.find(a => a.id === id);
+        if (found) {
+            appData = { ...found };
+            localStorage.setItem('debtActiveId', appData.id);
+            isiFormDariState();
             updateUI();
-            switchView('dashboard', document.querySelector('.nav-item')); 
+            switchView('dashboard', document.querySelector('.bottom-nav .nav-item:first-child'));
+        }
+    }
+
+    function buatAkunBaru() {
+        appData = { id: null, totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [], createdAt: null, namaPeminjam: "", idUnik: "" };
+        localStorage.removeItem('debtActiveId');
+        isiFormDariState();
+        updateUI();
+        switchView('pengaturan', document.querySelector('.bottom-nav .nav-item:last-child'));
+    }
+
+    function hapusAkun(id) {
+        if(confirm('Hapus akun/peminjam ini beserta semua riwayat tagihannya secara permanen?')) {
+            dbAccounts = dbAccounts.filter(a => a.id !== id);
+            localStorage.setItem('debtAppAccounts', JSON.stringify(dbAccounts));
+            
+            if(appData.id === id) { // Jika yang dihapus akun yang sedang terbuka
+                if(dbAccounts.length > 0) { pilihAkun(dbAccounts[0].id); } 
+                else { buatAkunBaru(); bukaHalamanAkun(); }
+            } else {
+                renderAkunList();
+            }
+        }
+    }
+
+    // Timpa fungsi resetData lama dengan ini
+    function resetData() {
+        if(confirm('Hapus HANYA akun ini secara permanen?')) {
+            if(appData.id) hapusAkun(appData.id);
         }
     }
     
@@ -674,15 +830,17 @@ function prosesPembayaran() {
     
     // 2. Tutup modal (ini akan mereset currentPaymentMonth menjadi null)
     closeModal('modal-confirm');
-    
+
     // 3. Gunakan variabel sementara untuk menyimpan data
     if (!appData.paidMonths) appData.paidMonths = [];
     if (!appData.paidMonths.includes(bulanYangDibayar)) {
-        appData.paidMonths.push(bulanYangDibayar); // Masukkan angkanya, bukan null
-        localStorage.setItem('debtAppData', JSON.stringify(appData));
+        appData.paidMonths.push(bulanYangDibayar);
+        
+        // GANTI MENJADI INI:
+        saveDB(); 
     }
     
-    updateUI(); // Segarkan tampilan (tombol akan berubah menjadi abu-abu)
+    updateUI(); // Segarkan tampilan
 
     setTimeout(() => {
         document.getElementById('modal-overlay').classList.add('show');
