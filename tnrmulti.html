@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Debt Manager Pro</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Variabel Neumorphism & Tema */
+        :root {
+            --bg-color: #e0e5ec;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --accent: #0984e3;
+            --danger: #d63031;
+            
+            --shadow-outset: 9px 9px 16px rgba(163, 177, 198, 0.6), 
+                            -9px -9px 16px rgba(255, 255, 255, 0.5);
+            --shadow-inset: inset 6px 6px 10px 0 rgba(163, 177, 198, 0.7), 
+                           inset -6px -6px 10px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Mobile First Container */
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 80px; /* Space for bottom nav */
+            box-shadow: var(--shadow-outset);
+        }
+
+        /* Header */
+        header {
+            padding: 30px 20px 20px;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            padding: 0 20px;
+            animation: fadeIn 0.4s ease;
+        }
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Neumorphic Components */
+        .card {
+            background-color: var(--bg-color);
+            border-radius: 20px;
+            box-shadow: var(--shadow-outset);
+            padding: 25px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .card h2 {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .card .amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        /* Form Inputs */
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 500;
+            padding-left: 5px;
+        }
+        .form-control {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: var(--shadow-inset);
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            box-shadow: var(--shadow-inset), 0 0 0 2px rgba(9, 132, 227, 0.2);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: var(--shadow-outset);
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn:active {
+            box-shadow: var(--shadow-inset);
+            color: var(--accent);
+        }
+        .btn-primary {
+            color: var(--accent);
+        }
+        .btn-danger {
+            color: var(--danger);
+        }
+
+        /* List Tagihan */
+        .list-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .list-item {
+            background: var(--bg-color);
+            border-radius: 15px;
+            padding: 15px 20px;
+            box-shadow: var(--shadow-outset);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .list-item .month {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .list-item .nominal {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: var(--bg-color);
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 -5px 15px rgba(163, 177, 198, 0.3);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 1.3rem; /* Sedikit diperbesar agar ikon lebih jelas */
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* [UBAH] Efek Cekung (Inset) pada menu yang aktif */
+        .nav-item.active {
+            color: var(--accent);
+            background: var(--bg-color); /* Pastikan background sama dengan var bg */
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.7), 
+                        inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+            transform: scale(0.95); /* Memberikan efek sedikit ditekan */
+        }
+        
+        /* Utility */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Gaya Tombol Bayar & Status Lunas */
+.btn-sm {
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    margin-bottom: 0;
+    width: auto;
+}
+.badge-lunas {
+    color: #00b894;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.list-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+/* Gaya Modal Popup Neumorphism */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1001;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: var(--bg-color);
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-outset);
+    z-index: 1002;
+    width: 85%;
+    max-width: 350px;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+.modal.show, .modal-overlay.show {
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+.modal-overlay.show {
+    transform: none;
+}
+
+        /* Gaya Tanggal Jatuh Tempo */
+.jatuh-tempo {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-weight: 400;
+}
+
+/* Efek Abu-abu Chromatic untuk Item Lunas */
+.item-lunas {
+    filter: grayscale(100%);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+/* Dead Button untuk Pembayaran Berhasil */
+.btn-success {
+    color: #00b894;
+    box-shadow: var(--shadow-inset); /* Tampilan tombol tertekan ke dalam */
+    cursor: not-allowed;
+    pointer-events: none; /* Membuat tombol tidak bisa diklik */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+        /* Gaya Rincian Struk Dashboard */
+.struk-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed rgba(99, 110, 114, 0.3);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.struk-value {
+    font-weight: 600;
+    color: var(--text-main);
+    text-align: right;
+}
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1 id="header-title">Dashboard</h1>
+    </header>
+
+    <!-- VIEW: DASHBOARD -->
+    <section id="view-dashboard" class="view active">
+        <div class="card">
+            <h2>Total Hutang</h2>
+            <div class="amount" id="dash-total">Rp 0</div>
+            <p style="color: var(--text-muted); font-size: 0.85rem;" id="dash-tenor">Tenor: 0 Bulan</p>
+        </div>
+        
+        <div class="card" style="margin-top: 20px;">
+            <h2>Tagihan Per Bulan</h2>
+            <div class="amount" id="dash-perbulan" style="font-size: 1.6rem;">Rp 0</div>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Est. cicilan tetap bulanan</p>
+        </div>
+
+        <!-- [TAMBAH] Card Rincian Struk di Dashboard -->
+        <div class="card" id="card-struk" style="display: none; margin-top: 20px; text-align: left;">
+            <h2 style="text-align: center; margin-bottom: 15px; color: var(--text-main);"><i class="fa-solid fa-receipt" style="color: var(--accent);"></i> Rincian Struk</h2>
+            <div class="struk-item">
+                <span>Nama Peminjam</span>
+                <span id="struk-nama" class="struk-value">-</span>
+            </div>
+            <div class="struk-item">
+                <span>ID</span>
+                <span id="struk-id" class="struk-value">-</span>
+            </div>
+            <div class="struk-item">
+                <span>Total Hutang</span>
+                <span id="struk-hutang" class="struk-value">-</span>
+            </div>
+            <div class="struk-item" style="border-bottom: none; flex-direction: column; align-items: flex-start; gap: 5px;">
+                <span>Waktu Pengajuan</span>
+                <span id="struk-waktu" class="struk-value" style="font-size: 0.75rem; text-align: left;">-</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- VIEW: TAGIHAN -->
+    <section id="view-tagihan" class="view">
+        <div id="tagihan-list" class="list-group">
+            <!-- List dirender via JS -->
+        </div>
+    </section>
+
+    <!-- VIEW: PENGATURAN -->
+    <section id="view-pengaturan" class="view">
+        <div class="card" style="text-align: left; padding: 20px;">
+            <form id="form-pengaturan">
+                
+                <div class="form-group">
+                    <label for="input-nama">Nama Peminjam</label>
+                    <input type="text" id="input-nama" class="form-control" placeholder="-" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="input-hutang">Jumlah Hutang (Rp)</label>
+                    <input type="number" id="input-hutang" class="form-control" placeholder="-" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="input-tenor">Lama Tenor (Bulan)</label>
+                    <input type="number" id="input-tenor" class="form-control" placeholder="-" required min="1" max="120">
+                </div>
+
+                <div class="form-group">
+                    <label for="input-perbulan">Nominal Per Bulan (Rp) - <i>Opsional</i></label>
+                    <input type="number" id="input-perbulan" class="form-control" placeholder="-">
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Kalkulasi
+                </button>
+            </form>
+        </div>
+
+        <button onclick="resetData()" class="btn btn-danger" style="margin-top: 10px;">
+            <i class="fa-solid fa-trash-can"></i> Reset Semua Data
+        </button>
+    </section>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchView('dashboard', this)">
+            <i class="fa-solid fa-chart-pie"></i>
+        </button>
+        <button class="nav-item" onclick="switchView('tagihan', this)">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+        </button>
+        <button class="nav-item" onclick="switchView('pengaturan', this)">
+            <i class="fa-solid fa-gear"></i>
+        </button>
+    </nav>
+</div>
+
+<!-- Overlay & Modal Konfirmasi -->
+<div id="modal-overlay" class="modal-overlay"></div>
+
+<div id="modal-confirm" class="modal">
+    <h3 style="margin-bottom: 10px;">Konfirmasi Pembayaran</h3>
+    <p id="confirm-text" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;"></p>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn" onclick="closeModal('modal-confirm')" style="margin-bottom: 0;">Batal</button>
+        <button class="btn btn-primary" id="btn-confirm-pay" style="margin-bottom: 0;">Bayar</button>
+    </div>
+</div>
+
+<!-- Modal Sukses -->
+<div id="modal-success" class="modal" style="text-align: center;">
+    <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: #00b894; margin-bottom: 15px;"></i>
+    <h3 style="margin-bottom: 10px;">Pembayaran Berhasil!</h3>
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Tagihan bulan ini telah dilunasi.</p>
+    <button class="btn btn-primary" onclick="closeModal('modal-success')" style="margin-bottom: 0;">Tutup</button>
+</div>
+<script>
+    // Konfigurasi State Format Rupiah
+    const formatRupiah = (angka) => {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(angka);
+    };
+
+    // State Management
+    let appData = {
+        totalHutang: 0,
+        tenor: 0,
+        perBulan: 0,
+        paidMonths: [],
+        createdAt: null,
+        namaPeminjam: "",
+        idUnik: ""
+    };
+
+    const formatTanggal = (isoString, tambahanBulan) => {
+    if (!isoString) return '-';
+    let date = new Date(isoString);
+    date.setMonth(date.getMonth() + tambahanBulan);
+    return date.toLocaleDateString('id-ID', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+    });
+};
+
+    const formatWaktuLengkap = (isoString) => {
+        if (!isoString) return '-';
+        const date = new Date(isoString);
+        const options = { 
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        };
+        // Mengganti titik menjadi titik dua (:) untuk jam/menit/detik
+        return date.toLocaleDateString('id-ID', options).replace(/\./g, ':'); 
+    };
+
+    // Inisialisasi Aplikasi
+    function initApp() {
+        const savedData = localStorage.getItem('debtAppData');
+        if (savedData) {
+            appData = JSON.parse(savedData);
+        }
+        updateUI();
+        
+        if(appData.totalHutang > 0) {
+            document.getElementById('input-nama').value = appData.namaPeminjam || ""; // Load nama
+            document.getElementById('input-hutang').value = appData.totalHutang;
+            document.getElementById('input-tenor').value = appData.tenor;
+            document.getElementById('input-perbulan').value = appData.perBulan;
+        }
+    }
+
+    // Update Seluruh UI
+    function updateUI() {
+        // Update Dashboard
+        document.getElementById('dash-total').innerText = formatRupiah(appData.totalHutang);
+        document.getElementById('dash-tenor').innerText = `Tenor: ${appData.tenor} Bulan`;
+        document.getElementById('dash-perbulan').innerText = formatRupiah(appData.perBulan);
+
+        // Render Rincian Struk
+        if (appData.totalHutang > 0) {
+            document.getElementById('card-struk').style.display = 'block';
+            document.getElementById('struk-nama').innerText = appData.namaPeminjam || '-';
+            document.getElementById('struk-id').innerText = appData.idUnik || '-';
+            document.getElementById('struk-hutang').innerText = formatRupiah(appData.totalHutang);
+            document.getElementById('struk-waktu').innerText = formatWaktuLengkap(appData.createdAt);
+        } else {
+            document.getElementById('card-struk').style.display = 'none';
+        }
+        
+        // Update List Tagihan
+        const tagihanList = document.getElementById('tagihan-list');
+        tagihanList.innerHTML = ''; // Bersihkan list
+
+        if (appData.tenor === 0 || appData.totalHutang === 0) {
+            tagihanList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-box-open"></i>
+                    <p>Belum ada rincian tagihan. Silakan atur di menu Pengaturan.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Generate Rincian Bulanan
+        for (let i = 1; i <= appData.tenor; i++) {
+    const isPaid = appData.paidMonths && appData.paidMonths.includes(i);
+    const tglJatuhTempo = formatTanggal(appData.createdAt, i);
+    
+    const div = document.createElement('div');
+    // Tambahkan class item-lunas jika sudah dibayar untuk efek chromatic
+    div.className = `list-item ${isPaid ? 'item-lunas' : ''}`; 
+    div.innerHTML = `
+        <div class="list-item-info">
+            <div class="month">Bulan ke-${i}</div>
+            <div class="nominal">${formatRupiah(appData.perBulan)}</div>
+            <div class="jatuh-tempo"><i class="fa-regular fa-calendar"></i> ${tglJatuhTempo}</div>
+        </div>
+        <div>
+            ${isPaid 
+                ? `<button class="btn btn-sm btn-success" disabled>Berhasil <i class="fa-solid fa-check"></i></button>` 
+                : `<button class="btn btn-sm btn-primary" onclick="konfirmasiBayar(${i})">Bayar</button>`
+            }
+        </div>
+    `;
+    tagihanList.appendChild(div);
+        }
+    }
+
+    // Handle Form Submit
+    document.getElementById('form-pengaturan').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nama = document.getElementById('input-nama').value;
+        const hutang = parseFloat(document.getElementById('input-hutang').value);
+        const tenor = parseInt(document.getElementById('input-tenor').value);
+        const inputPerBulan = document.getElementById('input-perbulan').value;
+        
+        if (hutang > 0 && tenor > 0) {
+            appData.namaPeminjam = nama;
+            appData.totalHutang = hutang;
+            appData.tenor = tenor;
+            
+            if (inputPerBulan && parseFloat(inputPerBulan) > 0) {
+                appData.perBulan = parseFloat(inputPerBulan);
+            } else {
+                appData.perBulan = hutang / tenor;
+            }
+            
+            // Simpan tanggal pengajuan dengan jam, menit, detik
+            if (!appData.createdAt) {
+                appData.createdAt = new Date().toISOString();
+            }
+
+            // Generate ID Unik Sinkron (Contoh: TNR-20260805-4321)
+            if (!appData.idUnik) {
+                const d = new Date();
+                const datePart = `${d.getFullYear()}${(d.getMonth()+1).toString().padStart(2,'0')}${d.getDate().toString().padStart(2,'0')}`;
+                const randomPart = Math.floor(1000 + Math.random() * 9000); // 4 digit angka acak
+                appData.idUnik = `TNR-${datePart}-${randomPart}`;
+            }
+            
+            localStorage.setItem('debtAppData', JSON.stringify(appData));
+            updateUI();
+            
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersimpan!';
+            btn.style.color = '#00b894';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.color = 'var(--accent)';
+            }, 2000);
+        }
+    });
+
+    // [UBAH] Handle Reset Data (Kosongkan nama dan id unik)
+    function resetData() {
+        if(confirm('Apakah Anda yakin ingin mereset seluruh data tagihan?')) {
+            appData = { totalHutang: 0, tenor: 0, perBulan: 0, paidMonths: [], createdAt: null, namaPeminjam: "", idUnik: "" };
+            localStorage.removeItem('debtAppData');
+            document.getElementById('input-nama').value = '';
+            document.getElementById('input-hutang').value = '';
+            document.getElementById('input-tenor').value = '';
+            document.getElementById('input-perbulan').value = '';
+            updateUI();
+            switchView('dashboard', document.querySelector('.nav-item')); 
+        }
+    }
+    
+    // Navigasi Bottom Nav
+    function switchView(viewName, element) {
+        // Update Nav Active State
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        // Update View Display
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.getElementById(`view-${viewName}`).classList.add('active');
+
+        // Update Header Title
+        const titleMap = {
+            'dashboard': 'Dashboard',
+            'tagihan': 'Rincian Tagihan',
+            'pengaturan': 'Pengaturan Sistem'
+        };
+        document.getElementById('header-title').innerText = titleMap[viewName];
+    }
+
+    let currentPaymentMonth = null;
+
+function konfirmasiBayar(bulan) {
+    currentPaymentMonth = bulan;
+    document.getElementById('confirm-text').innerHTML = `Bayar tagihan <b>Bulan ke-${bulan}</b> sebesar <b>${formatRupiah(appData.perBulan)}</b>?`;
+    
+    document.getElementById('modal-overlay').classList.add('show');
+    document.getElementById('modal-confirm').classList.add('show');
+    
+    document.getElementById('btn-confirm-pay').onclick = prosesPembayaran;
+}
+
+// [UBAH] Fungsi Proses Pembayaran
+function prosesPembayaran() {
+    // 1. Simpan nilai bulan ke variabel sementara sebelum di-reset oleh closeModal
+    const bulanYangDibayar = currentPaymentMonth; 
+    
+    // 2. Tutup modal (ini akan mereset currentPaymentMonth menjadi null)
+    closeModal('modal-confirm');
+    
+    // 3. Gunakan variabel sementara untuk menyimpan data
+    if (!appData.paidMonths) appData.paidMonths = [];
+    if (!appData.paidMonths.includes(bulanYangDibayar)) {
+        appData.paidMonths.push(bulanYangDibayar); // Masukkan angkanya, bukan null
+        localStorage.setItem('debtAppData', JSON.stringify(appData));
+    }
+    
+    updateUI(); // Segarkan tampilan (tombol akan berubah menjadi abu-abu)
+
+    setTimeout(() => {
+        document.getElementById('modal-overlay').classList.add('show');
+        document.getElementById('modal-success').classList.add('show');
+    }, 200); 
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+    document.getElementById('modal-overlay').classList.remove('show');
+    currentPaymentMonth = null;
+}
+
+    // Jalankan inisialisasi saat web dimuat
+    document.addEventListener('DOMContentLoaded', initApp);
+</script>
+
+</body>
+</html>
