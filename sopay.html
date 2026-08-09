@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPinjam UI Clone</title>
+    
+    <!-- Google Fonts: Inter untuk tampilan UI yang profesional & premium -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6.4.0 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ========================
+           CSS VARIABLES & RESET
+           ======================== */
+        :root {
+            --primary-orange: #ff5722;
+            --gradient-orange: linear-gradient(135deg, #ff6b00, #ff3d00);
+            --bg-color: #f6f7f9;
+            --text-dark: #222222;
+            --text-muted: #757575;
+            --text-light: #9e9e9e;
+            --white: #ffffff;
+            --border-color: #eaeaea;
+            --green: #2196f3; /* Adjusting for UI balance, image uses a slightly greenish blue/teal */
+            --green-success: #2e7d32;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.04);
+            --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #e0e0e0; /* Darker bg for desktop testing */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        /* Mobile First Container */
+        .app-container {
+            width: 100%;
+            max-width: 480px; /* Standard mobile width for desktop viewing */
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* ========================
+           HEADER
+           ======================== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background-color: var(--white);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header .fa-arrow-left {
+            color: var(--primary-orange);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+            flex: 1;
+            margin-left: 16px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 20px;
+        }
+
+        .header-actions i {
+            font-size: 20px;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+
+        /* ========================
+           MAIN CONTENT AREA
+           ======================== */
+        .content {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ========================
+           CREDIT LIMIT CARD (ORANGE)
+           ======================== */
+        .credit-card {
+            background: var(--gradient-orange);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            color: var(--white);
+            box-shadow: 0 8px 16px rgba(255, 87, 34, 0.2);
+        }
+
+        .credit-card .title {
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .credit-card .amount {
+            font-size: 36px;
+            font-weight: 700;
+            margin: 8px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .credit-card .amount span {
+            font-size: 20px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .credit-card .subtitle {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 24px;
+        }
+
+        .btn-cairkan {
+            width: 100%;
+            background-color: var(--white);
+            color: var(--primary-orange);
+            border: none;
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cairkan:active {
+            transform: scale(0.98);
+            background-color: #f9f9f9;
+        }
+
+        /* ========================
+           GENERAL CARDS (WHITE)
+           ======================== */
+        .card {
+            background-color: var(--white);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-header h2 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-header h2 i {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .link-muted {
+            color: var(--text-muted);
+            font-size: 13px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ========================
+           TAGIHAN (CURRENT BILL)
+           ======================== */
+        .empty-state {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 8px 0;
+        }
+
+        .icon-wrapper {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .icon-wrapper .fa-file-lines {
+            color: #d1d5db;
+            font-size: 32px;
+        }
+
+        .icon-wrapper .status-icon {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            color: #10b981; /* Green success */
+            background: white;
+            border-radius: 50%;
+            font-size: 16px;
+            border: 2px solid white;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ========================
+           PROMO BANNER (CSS MOCKUP)
+           ======================== */
+        .promo-banner {
+            background: linear-gradient(90deg, #ff9800, #ff5722);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 110px;
+            box-shadow: var(--shadow-card);
+        }
+        
+        /* Decorative elements to mimic the banner graphic */
+        .promo-banner::before {
+            content: "\f1b9"; /* Car icon */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            left: -20px;
+            bottom: -20px;
+            font-size: 100px;
+            opacity: 0.15;
+            transform: rotate(-10deg);
+        }
+
+        .promo-content {
+            position: relative;
+            z-index: 1;
+            text-align: right;
+        }
+
+        .promo-title {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .promo-main {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .promo-badges {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .promo-badges span {
+            background: #1565c0; /* Blue badge */
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            text-align: center;
+            line-height: 1.2;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .promo-badges span strong {
+            font-size: 12px;
+            color: #ffd54f; /* Yellow text */
+        }
+
+        /* ========================
+           VOUCHER TICKET
+           ======================== */
+        .voucher-ticket {
+            display: flex;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: var(--white);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            position: relative;
+        }
+
+        .voucher-left {
+            width: 32%;
+            border-right: 1.5px dashed #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            position: relative;
+            background-color: #fafafa;
+        }
+
+        /* Circle cutouts for ticket effect */
+        .voucher-left::before, .voucher-left::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            width: 12px;
+            height: 12px;
+            background-color: var(--white);
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            z-index: 2;
+        }
+        .voucher-left::before {
+            top: -7px;
+            border-bottom-color: transparent;
+            border-left-color: transparent;
+            transform: rotate(-45deg);
+        }
+        .voucher-left::after {
+            bottom: -7px;
+            border-top-color: transparent;
+            border-left-color: transparent;
+            transform: rotate(45deg);
+        }
+
+        .v-icon {
+            color: var(--primary-orange);
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+        
+        .v-brand {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .voucher-right {
+            width: 68%;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .v-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+            padding-right: 60px; /* Space for button */
+            line-height: 1.4;
+        }
+
+        .v-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .v-tag {
+            font-size: 10px;
+            color: var(--primary-orange);
+            background-color: #ffefe5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 8px;
+            width: max-content;
+        }
+
+        .v-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+        }
+
+        .v-expiry {
+            font-size: 11px;
+            color: #d32f2f; /* Red warning */
+        }
+
+        .v-tnc {
+            font-size: 11px;
+            color: #1976d2; /* Blue link */
+            text-decoration: none;
+        }
+
+        .btn-pakai {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--primary-orange);
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-pakai:active {
+            opacity: 0.8;
+        }
+
+        /* ========================
+           LIST ITEM (BOTTOM)
+           ======================== */
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 16px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .list-item h2 {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .list-value {
+            font-size: 14px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .list-value i {
+            color: var(--text-light);
+            font-size: 12px;
+        }
+        
+        /* Subtle hover state for interactive cards */
+        .card:active, .list-item:active {
+            background-color: #fcfcfc;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <i class="fa-solid fa-arrow-left"></i>
+            <h1>SPinjam</h1>
+            <div class="header-actions">
+                <i class="fa-regular fa-clock"></i>
+                <i class="fa-regular fa-user"></i>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- Credit Limit Card -->
+            <div class="credit-card">
+                <div class="title">
+                    Limit Kredit Tersedia <i class="fa-regular fa-circle-question"></i>
+                </div>
+                <div class="amount">
+                    <span>Rp</span>7.027.418
+                </div>
+                <div class="subtitle">Nikmati bunga mulai dari 0,07% per hari</div>
+                <button class="btn-cairkan">Cairkan</button>
+            </div>
+
+            <!-- Tagihan Saat Ini -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Tagihan Saat Ini <i class="fa-regular fa-circle-question"></i></h2>
+                </div>
+                <div class="empty-state">
+                    <div class="icon-wrapper">
+                        <i class="fa-regular fa-file-lines"></i>
+                        <i class="fa-solid fa-circle-check status-icon"></i>
+                    </div>
+                    <p>Kamu tidak memiliki tagihan dalam 10 hari ke depan</p>
+                </div>
+            </div>
+
+            <!-- Promo Banner (CSS Mimic) -->
+            <div class="promo-banner">
+                <div class="promo-content">
+                    <div class="promo-title">
+                        <i class="fa-solid fa-car-side"></i> SJaminan BPKB
+                    </div>
+                    <div class="promo-main">
+                        ATUR CICILAN<br>SESUAI KEMAMPUAN
+                    </div>
+                    <div class="promo-badges">
+                        <span>PINJAMAN S.D.<br><strong>800 JUTA</strong></span>
+                        <span>TENOR PANJANG HINGGA<br><strong>48 BULAN</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voucher Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Voucher</h2>
+                    <a href="#" class="link-muted">Lihat Semua <i class="fa-solid fa-chevron-right"></i></a>
+                </div>
+                
+                <div class="voucher-ticket">
+                    <div class="voucher-left">
+                        <div class="v-icon">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                        <div class="v-brand">Voucher<br>SPinjam</div>
+                    </div>
+                    <div class="voucher-right">
+                        <div class="v-title">Potongan Rp2,5RB Pembayaran</div>
+                        <div class="v-desc">Pembayaran min....</div>
+                        <div class="v-tag">Semua metode pembay...</div>
+                        <div class="v-footer">
+                            <span class="v-expiry">Berakhir dlm: 1 hari</span>
+                            <a href="#" class="v-tnc">S&K</a>
+                        </div>
+                        <button class="btn-pakai">Pakai</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pinjaman Belum Lunas -->
+            <div class="card list-item">
+                <h2>Pinjaman Belum Lunas</h2>
+                <div class="list-value">
+                    1 Berjalan <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
