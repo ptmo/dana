@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beli SOL | MoonPay</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #f5f6fa;
+      font-family: Arial, sans-serif;
+      color: #171717;
+    }
+
+    .card {
+      width: min(90%, 380px);
+      padding: 28px;
+      background: white;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 8px 30px #0000000d;
+    }
+
+    .coin {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      background: #714bff;
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 30px;
+      font-weight: bold;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0 0 10px;
+    }
+
+    p {
+      color: #666;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .buy-button {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin-top: 24px;
+      background: #714bff;
+      color: white;
+      border: 0;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .buy-button:active {
+      opacity: 0.8;
+    }
+
+    .note {
+      font-size: 12px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <div class="coin">S</div>
+
+    <h1>Beli Solana (SOL)</h1>
+
+    <p>
+      Beli SOL melalui MoonPay dan kirim
+      ke alamat wallet tujuan yang telah ditentukan.
+    </p>
+
+    <button class="buy-button" id="buySol">
+      Buy SOL with MoonPay
+    </button>
+
+    <p class="note">
+      Pembelian diproses oleh MoonPay.
+      Biaya dan verifikasi mengikuti ketentuan mereka.
+    </p>
+  </main>
+
+  <script>
+    const moonPayBuyUrl =
+      "TEMPELKAN_URL_PEMBELIAN_MOONPAY_DI_SINI";
+
+    document
+      .getElementById("buySol")
+      .addEventListener("click", () => {
+        if (!moonPayBuyUrl.startsWith(
+          "https://buy.moonpay.com/"
+        )) {
+          alert("URL pembelian MoonPay belum diatur.");
+          return;
+        }
+
+        window.open(
+          moonPayBuyUrl,
+          "_blank",
+          "noopener,noreferrer"
+        );
+      });
+  </script>
+</body>
+</html>
